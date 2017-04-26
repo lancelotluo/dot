@@ -1,0 +1,21 @@
+digraph {
+	"ngx_http_core_content_phase"->"ngx_http_finalize_request(r, r->content_handler(r))";
+	"ngx_http_finalize_request(r, r->content_handler(r))"->"ngx_http_proxy_handler";
+	"ngx_http_proxy_handler"->"ngx_http_read_client_request_body(r, ngx_http_upstream_init)";
+	"ngx_http_read_client_request_body(r, ngx_http_upstream_init)"->"";
+	"ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)"->"u->write_event_handler = ngx_http_upstream_send_request_handler";
+	"u->write_event_handler = ngx_http_upstream_send_request_handler"->"u->read_event_handler = ngx_http_upstream_process_header";
+	"u->read_event_handler = ngx_http_upstream_process_header"->"ngx_http_upstream_send_request";
+	"ngx_http_upstream_send_request"->
+	"ngx_http_upstream_process_header"->"";
+}
+
+ngx_http_core_content_phase(r, )
+		    ->ngx_http_finalize_request(r, r->content_handler(r));
+			    ->ngx_http_proxy_handler(ngx_http_request_t *r)
+		    ->ngx_http_read_client_request_body(r, ngx_http_upstream_init);
+			    ->ngx_http_upstream_init
+				        ->ngx_http_upstream_init_request(r); 
+						            ->ngx_http_upstream_connect(r, u); 这里会将u->read_event_handler设置为ngx_http_upstream_process_header。
+									                ->ngx_http_upstream_send_request(r, u, 1);
+													                    ->ngx_http_upstream_send_request_body(r, u, do_write);

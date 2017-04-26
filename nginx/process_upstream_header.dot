@@ -1,7 +1,63 @@
-digraph {
-	"ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)"->"u->write_event_handler = ngx_http_upstream_send_request_handler";
-	"u->write_event_handler = ngx_http_upstream_send_request_handler"->"u->read_event_handler = ngx_http_upstream_process_header";
-	"u->read_event_handler = ngx_http_upstream_process_header"->"ngx_http_upstream_send_request";
-	"ngx_http_upstream_send_request"->
-	"ngx_http_upstream_process_header"->"";
+digraph G {
+	"upstream" [style=bold,shape=box];
+	"upstream"->"ngx_http_upstream_process_header";
+	"ngx_http_upstream_process_header"->"u->buffer.start = ngx_palloc(r->pool, u->conf->buffer_size)";
+	"u->buffer.start = ngx_palloc(r->pool, u->conf->buffer_size)"->"for(;;)";
+	"for(;;)"->"c->recv(c, u->buffer.last, u->buffer.end - u->buffer.last)";
+	"c->recv(c, u->buffer.last, u->buffer.end - u->buffer.last)"->"n=c->recv()";
+	"n=c->recv()"[shape=diamond];
+	"n=c->recv()"->"n == NGX_AGAIN";
+	"n == NGX_AGAIN"->"ngx_handle_read_event(c->read, 0)"
+	"ngx_handle_read_event(c->read, 0)"->"ngx_http_upstream_process_header";
+	"n=c->recv()"->"n == 0";
+	"n == 0"->"upstream prematurely closed connection";
+	"upstream prematurely closed connection"->"ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR)";
+	"ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR)"->"return void";
+	"n=c->recv()"->"n > 0";
+	"n > 0"->"rc = u->process_header(r)";
+	"rc = u->process_header(r)"->"rc == NGX_AGAIN";
+	"rc == NGX_AGAIN"->"u->buffer.last == u->buffer.end"[label=Y];
+	"u->buffer.last == u->buffer.end"->"upstream sent too big header"[label=Y];
+	"upstream sent too big header"->"ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_INVALID_HEADER)";
+	"ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_INVALID_HEADER)"->"return";
+	"u->buffer.last == u->buffer.end"->"continue"[label=N];
+	"continue"->"for(;;)"[label=N];
+	"rc == NGX_AGAIN"->"break"[label=N];
+	"break"->"rc == NGX_HTTP_UPSTREAM_INVALID_HEADER)";
+	"rc == NGX_HTTP_UPSTREAM_INVALID_HEADER)"->	"ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_INVALID_HEADER)"[label=Y];
+	"ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_INVALID_HEADER)"->"return";
+	"rc == NGX_HTTP_UPSTREAM_INVALID_HEADER)"->	"rc == NGX_ERROR"[label=N];
+	"rc == NGX_ERROR"->"ngx_http_upstream_finalize_request(r, u, NGX_HTTP_INTERNAL_SERVER_ERROR)"[label=Y];
+	"ngx_http_upstream_finalize_request(r, u, NGX_HTTP_INTERNAL_SERVER_ERROR)"->"return";
+	"rc == NGX_ERROR"->"rc == NGX_OK";
+	"rc == NGX_OK"->"ngx_http_upstream_process_headers(r, u)";
+	"ngx_http_upstream_process_headers(r, u)"->"!r->subrequest_in_memory";
+	"!r->subrequest_in_memory"->"ngx_http_upstream_send_response(r, u)"[label=Y];
+	"ngx_http_upstream_send_response(r, u)"->"return";
+	"!r->subrequest_in_memory"->"u->input_filter_init(u->input_filter_ctx)"[label=N];
+	"u->input_filter_init(u->input_filter_ctx)"->"ngx_http_upstream_process_body_in_memory(r, u)";
+	"ngx_http_upstream_process_body_in_memory(r, u)"->"return";
+subgraph process_header {
+	"u->process_header(r)"->"ngx_http_proxy_process_status_line(ngx_http_request_t *r)"[style=dashed];
+	"ngx_http_proxy_process_status_line(ngx_http_request_t *r)"->"rc=ngx_http_parse_status_line(r, &u->buffer, &ctx->status)"[style=dashed];
+	"rc=ngx_http_parse_status_line(r, &u->buffer, &ctx->status)"->"rc==NGX_AGAIN";
+	"rc==NGX_AGAIN"->"return NGX_AGAIN"[label=Y];
+	"rc==NGX_AGAIN"->"rc==NGX_ERROR"[label=N];
+	"rc==NGX_ERROR"->"log(upstream sent no valid HTTP/1.0 header)"[label=Y];
+	"log(upstream sent no valid HTTP/1.0 header)"->"return NGX_OK";
+	"rc==NGX_ERROR"->"u->process_header = ngx_http_proxy_process_header"[label=N];
+	"u->process_header = ngx_http_proxy_process_header"->"return ngx_http_proxy_process_header(r)";
 }
+}
+
+/*
+   ngx_http_core_content_phase(r, )
+		    ->ngx_http_finalize_request(r, r->content_handler(r));
+			    ->ngx_http_proxy_handler(ngx_http_request_t *r)
+		    ->ngx_http_read_client_request_body(r, ngx_http_upstream_init);
+			    ->ngx_http_upstream_init
+				        ->ngx_http_upstream_init_request(r); 
+						            ->ngx_http_upstream_connect(r, u); 这里会将u->read_event_handler设置为ngx_http_upstream_process_header。
+									                ->ngx_http_upstream_send_request(r, u, 1);
+													                    ->ngx_http_upstream_send_request_body(r, u, do_write);
+																		*/
