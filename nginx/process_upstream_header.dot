@@ -1,0 +1,7 @@
+digraph {
+	"ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)"->"u->write_event_handler = ngx_http_upstream_send_request_handler";
+	"u->write_event_handler = ngx_http_upstream_send_request_handler"->"u->read_event_handler = ngx_http_upstream_process_header";
+	"u->read_event_handler = ngx_http_upstream_process_header"->"ngx_http_upstream_send_request";
+	"ngx_http_upstream_send_request"->
+	"ngx_http_upstream_process_header"->"";
+}
