@@ -1,0 +1,26 @@
+digraph m {
+	"ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)"->"c = u->peer.connection";
+	"c = u->peer.connection"->"c->write->handler = ngx_http_upstream_handler";
+	"c = u->peer.connection"->"表示和upstream的连接"[color=grey,style=dashed];
+	"c = u->peer.connection"->"c->write->handler = ngx_http_upstream_handler";
+	"c->write->handler = ngx_http_upstream_handler"->"c->read->handler = ngx_http_upstream_handler";
+	"c->write->handler = ngx_http_upstream_handler"->"和upstream发生读写事件后，都会调用ngx_http_upstream_handler"[color=grey,style=dashed];
+	"c->read->handler = ngx_http_upstream_handler"->"和upstream发生读写事件后，都会调用ngx_http_upstream_handler"[color=grey,style=dashed];
+
+subgraph cluster_upstream_handler {
+	label="ngx_http_upstream_handler";
+	"ngx_http_upstream_handler"->"ev->write";
+	"ev->write"->"u->write_event_handler(r, u)"[label=Y];
+	"ev->write"->"u->read_event_handler(r, u)"[label=N];
+	"ev->write"->"ngx_http_run_posted_requests(c)";
+}
+
+subgraph cluster_ngx_http_upstream_process_header {
+	label="ngx_http_upstream_process_header";
+	"接收upstream第一个数据时调用gx_http_upstream_process_header(r, u)"->"ngx_http_upstream_process_header(r, u)";
+	"u->buffer.start = ngx_palloc(r->pool, u->conf->buffer_size)分配内存，默认是4K"[shape=plaintext];
+	"ngx_http_upstream_process_header(r, u)"->"u->buffer.start = ngx_palloc(r->pool, u->conf->buffer_size)分配内存，默认是4K";
+	"u->buffer.start = ngx_palloc(r->pool, u->conf->buffer_size)分配内存，默认是4K"->"ngx_list_init(&u->headers_in.headers, r->pool, 8,sizeof(ngx_table_elt_t)初始化upstream的头部表";
+//	"ngx_list_init(&u->headers_in.headers, r->pool, 8,sizeof(ngx_table_elt_t)初始化upstream的头部表"->
+}
+}

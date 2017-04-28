@@ -1,0 +1,146 @@
+digraph m {
+	"ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)"->
+	"c = u->peer.connection 
+	表示和upstream的连接";
+	"c = u->peer.connection 
+	表示和upstream的连接"->
+	"c->write->handler = ngx_http_upstream_handler;
+	 c->read->handler = ngx_http_upstream_handler;
+	upstream发生读写事件后，都会调用ngx_http_upstream_handler";
+	"c->write->handler = ngx_http_upstream_handler;
+	 c->read->handler = ngx_http_upstream_handler;
+	upstream发生读写事件后，都会调用ngx_http_upstream_handler"->
+	"u->write_event_handler = ngx_http_upstream_send_request_handler
+	u->read_event_handler = ngx_http_upstream_process_header";
+	"c->write->handler = ngx_http_upstream_handler;
+	 c->read->handler = ngx_http_upstream_handler;
+	upstream发生读写事件后，都会调用ngx_http_upstream_handler"->"ngx_http_upstream_handler"[color=grey,style=dashed];
+
+subgraph cluster_upstream_handler {
+	label="ngx_http_upstream_handler";
+	"ngx_http_upstream_handler"->"ev->write";
+	"ev->write"->"u->write_event_handler(r, u)"[label=Y];
+	"ev->write"->
+	"u->read_event_handler(r, u)初始化为
+	ngx_http_upstream_process_header，所以upstream回数据时，
+	第一次就调用这个函数"[label=N];
+	"u->read_event_handler(r, u)初始化为
+	ngx_http_upstream_process_header，所以upstream回数据时，
+	第一次就调用这个函数"->"ngx_http_upstream_process_header(r, u)";
+	"ev->write"->"ngx_http_run_posted_requests(c)";
+}
+
+subgraph cluster_ngx_http_upstream_process_header {
+	label="ngx_http_upstream_process_header
+	接收upstream第一个数据时调用
+	ngx_http_upstream_process_header(r, u)";
+	"u->buffer.start = ngx_palloc(r->pool, u->conf->buffer_size)
+	分配内存，默认是4K"[shape=plaintext];
+	"ngx_http_upstream_process_header(r, u)"->"u->buffer.start = ngx_palloc(r->pool, u->conf->buffer_size)
+	分配内存，默认是4K";
+	"u->buffer.start = ngx_palloc(r->pool, u->conf->buffer_size)
+	分配内存，默认是4K"->
+	"ngx_list_init(&u->headers_in.headers, r->pool, 8,sizeof(ngx_table_elt_t)
+	初始化upstream的头部表";
+	"ngx_list_init(&u->headers_in.headers, r->pool, 8,sizeof(ngx_table_elt_t)
+	初始化upstream的头部表"->"for ( ;; )";
+	"for ( ;; )"->"n = c->recv(c, u->buffer.last, u->buffer.end - u->buffer.last)";
+	"n = c->recv(c, u->buffer.last, u->buffer.end - u->buffer.last)"->
+	"recv循环读数据，如果返回NGX_AGAIN，
+	则将读事件重新加入epoll，如果出错
+	则关闭连接。如果n>0，继续处理"[style=dashed];
+	"recv循环读数据，如果返回NGX_AGAIN，
+	则将读事件重新加入epoll，如果出错
+	则关闭连接。如果n>0，继续处理"[shape=plaintext];
+	"n = c->recv(c, u->buffer.last, u->buffer.end - u->buffer.last)"->
+	"rc = u->process_header(r)
+	初始函数为ngx_http_proxy_process_status_line";
+	"rc = u->process_header(r)
+	初始函数为ngx_http_proxy_process_status_line"->
+	"u.buffer满了，	说明头部数据过大，
+	一个buffer装不下，直接返回错误
+	upstream sent too big header"[label="rc==NGX_AGAIN"];
+	"u.buffer满了，	说明头部数据过大，
+	一个buffer装不下，直接返回错误
+	upstream sent too big header"[shape=plaintext];
+	"rc = u->process_header(r)
+	初始函数为ngx_http_proxy_process_status_line"->"u.buffer没满，继续for循环"[label="rc==NGX_AGAIN"];
+	"u.buffer没满，继续for循环"->"for ( ;; )";
+	"rc = u->process_header(r)
+	初始函数为ngx_http_proxy_process_status_line"->"ngx_http_upstream_process_headers(r, u)"[label="rc==NGX_OK"];
+	"ngx_http_upstream_process_headers(r, u)"->"ngx_http_upstream_send_response(r, u)"[label="!r->subrequest_in_memory"];
+	"ngx_http_upstream_send_response(r, u)"->"return";
+	"ngx_http_upstream_send_response(r, u)"->"void ngx_http_upstream_send_response(ngx_http_request_t *r, 
+	 ngx_http_upstream_t *u)"[style=dashed];
+}
+subgraph cluster_http_upstream_send_response {
+	label="ngx_http_upstream_send_response";
+	"void ngx_http_upstream_send_response(ngx_http_request_t *r, 
+	 ngx_http_upstream_t *u)"->"rc = ngx_http_send_header(r)";
+	"rc = ngx_http_send_header(r)"->
+	"if (!u->buffering)
+	proxy_buffering off时，默认走这个逻辑";
+	"初始化filter，更新upstream的读事件函数
+	u->input_filter_init = ngx_http_upstream_non_buffered_filter_init;
+	u->input_filter = ngx_http_upstream_non_buffered_filter;
+	u->read_event_handler = ngx_http_upstream_process_non_buffered_upstream;
+	r->write_event_handler =
+						ngx_http_upstream_process_non_buffered_downstream;"[shape=record];
+	"if (!u->buffering)
+	proxy_buffering off时，默认走这个逻辑"->
+	"初始化filter，更新upstream的读事件函数
+	u->input_filter_init = ngx_http_upstream_non_buffered_filter_init;
+	u->input_filter = ngx_http_upstream_non_buffered_filter;
+	u->read_event_handler = ngx_http_upstream_process_non_buffered_upstream;
+	r->write_event_handler =
+						ngx_http_upstream_process_non_buffered_downstream;"
+	"初始化filter，更新upstream的读事件函数
+	u->input_filter_init = ngx_http_upstream_non_buffered_filter_init;
+	u->input_filter = ngx_http_upstream_non_buffered_filter;
+	u->read_event_handler = ngx_http_upstream_process_non_buffered_upstream;
+	r->write_event_handler =
+						ngx_http_upstream_process_non_buffered_downstream;"->
+	"n = u->buffer.last - u->buffer.pos";
+	"n = u->buffer.last - u->buffer.pos"->"u->input_filter(u->input_filter_ctx, n)"[label="n > 0"];
+	"u->input_filter(u->input_filter_ctx, n)"->"ngx_http_upstream_process_non_buffered_downstream(r)";
+	"ngx_http_upstream_process_non_buffered_downstream(r)"->"ngx_http_upstream_process_non_buffered_request(r, 1)"[style=dashed];
+	"n = u->buffer.last - u->buffer.pos"->"ngx_http_send_special(r, NGX_HTTP_FLUSH)"[label="n < 0"];
+}
+subgraph cluster_ngx_http_upstream_process_non_buffered_request{
+	label="static void 
+		ngx_http_upstream_process_non_buffered_request(ngx_http_request_t *r, 
+			ngx_uint_t do_write)";
+	"ngx_http_upstream_process_non_buffered_request(r, 1)"->"for( ;; )"[style=dashed];
+	"发送完头部后，如果body一直有数据，则会不断调用
+	for循环，先读upstream的数据，然后通过output_filter写给downstream"[shape=plaintext, color=red];
+	"for( ;; )"->
+	"发送完头部后，如果body一直有数据，则会不断调用
+	for循环，先读upstream的数据，然后通过output_filter写给downstream"[style=dashed,color=red];
+	"for( ;; )"->"if (do_write)";
+	"if (do_write)"->
+	"rc = ngx_http_output_filter(r, u->out_bufs)
+	output_filter会调用一系列ngx_http_top_body_filter(r, in)
+	最终会调用ngx_http_write_filter将数据发送给downstream"[label=Y];
+	"rc = ngx_http_output_filter(r, u->out_bufs)
+	output_filter会调用一系列ngx_http_top_body_filter(r, in)
+	最终会调用ngx_http_write_filter将数据发送给downstream"->
+	"ngx_chain_update_chains(r->pool, &u->free_bufs, 
+	&u->busy_bufs, &u->out_bufs, u->output.tag)";
+	"if (do_write)"->
+	"size = b->end - b->last;
+	buffer还有空闲空间"[label=N];
+	"size = b->end - b->last;
+	buffer还有空闲空间"->"n = upstream->recv(upstream, b->last, size)";
+	"n = upstream->recv(upstream, b->last, size)"->"break跳出循环"[label="n==NGX_AGAIN"];
+	"n = upstream->recv(upstream, b->last, size)"->" u->input_filter(u->input_filter_ctx, n)"[label="n>0"];
+	" u->input_filter(u->input_filter_ctx, n)"->
+	"do_write = 1;
+	 continue;
+	 继续for循环，由于do_write设置为1了，下一轮循环会调用
+	 ngx_http_output_filter将数据写给客户端";
+	"do_write = 1;
+	 continue;
+	 继续for循环，由于do_write设置为1了，下一轮循环会调用
+	 ngx_http_output_filter将数据写给客户端"->"for( ;; )";
+}
+}

@@ -48,16 +48,29 @@ subgraph process_header {
 	"rc==NGX_ERROR"->"u->process_header = ngx_http_proxy_process_header"[label=N];
 	"u->process_header = ngx_http_proxy_process_header"->"return ngx_http_proxy_process_header(r)";
 }
+
+subgraph ngx_http_upstream_send_response {
+	"ngx_http_upstream_send_response(ngx_http_request_t *r, ngx_http_upstream_t *u)"->"ngx_http_send_header(r)"[style=dashed];
+	"r->header_only"[shape=diamond];
+	"ngx_http_send_header(r)"->"r->header_only";
+	"r->header_only"->"!u->buffering"[label=Y];
+	"!u->buffering"->"ngx_http_upstream_finalize_request(r, u, rc)"[label=Y];
+	"ngx_http_upstream_finalize_request(r, u, rc)"->"return";
+	"r->header_only"->"!u->buffering"[label=N];
+	"!u->buffering"->"u->input_filter = ngx_http_upstream_non_buffered_filter"[label=Y];
+	"u->input_filter = ngx_http_upstream_non_buffered_filter"->"u->read_event_handler = ngx_http_upstream_process_non_buffered_upstream";
+	"u->read_event_handler = ngx_http_upstream_process_non_buffered_upstream"->"r->write_event_handler = ngx_http_upstream_process_non_buffered_downstream";
+	"r->write_event_handler = ngx_http_upstream_process_non_buffered_downstream"->"n = u->buffer.last - u->buffer.pos";
+	"n = u->buffer.last - u->buffer.pos"->"u->buffer.last = u->buffer.pos"[label="n>0"];
+	"u->buffer.last = u->buffer.pos"->"u->input_filter(u->input_filter_ctx, n)";
+	"u->input_filter(u->input_filter_ctx, n)"->"ngx_http_upstream_process_non_buffered_downstream(r)";
+	"ngx_http_upstream_process_non_buffered_downstream(r)"->"return";
+	"n = u->buffer.last - u->buffer.pos"->"u->buffer.pos = u->buffer.start"[label="n<=0"];
+	"u->buffer.pos = u->buffer.start"->"u->buffer.last = u->buffer.start";
+	"u->buffer.last = u->buffer.start"->"ngx_http_send_special(r, NGX_HTTP_FLUSH)";
+	"ngx_http_send_special(r, NGX_HTTP_FLUSH)"->"u->peer.connection->read->ready || u->length == 0";
+	"u->peer.connection->read->ready || u->length == 0"->"ngx_http_upstream_process_non_buffered_upstream(r, u)"[label=Y];
+	"ngx_http_upstream_process_non_buffered_upstream(r, u)"->"return";
+}
 }
 
-/*
-   ngx_http_core_content_phase(r, )
-		    ->ngx_http_finalize_request(r, r->content_handler(r));
-			    ->ngx_http_proxy_handler(ngx_http_request_t *r)
-		    ->ngx_http_read_client_request_body(r, ngx_http_upstream_init);
-			    ->ngx_http_upstream_init
-				        ->ngx_http_upstream_init_request(r); 
-						            ->ngx_http_upstream_connect(r, u); 这里会将u->read_event_handler设置为ngx_http_upstream_process_header。
-									                ->ngx_http_upstream_send_request(r, u, 1);
-													                    ->ngx_http_upstream_send_request_body(r, u, do_write);
-																		*/
