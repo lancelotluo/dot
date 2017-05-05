@@ -1,0 +1,50 @@
+digraph G {
+	"ngx_http_upstream_send_response(ngx_http_request_t *r, ngx_http_upstream_t *u)"->
+	"ngx_http_send_header(r)
+	调用ngx_http_top_header_filter(r)，最终会调用
+	ngx_http_header_filter将headers_in里的数据
+	组装成http头部格式，放到buf ，再通过
+	ngx_http_write_filter(r, &out)发送出去";
+	"r->header_only"[shape=diamond];
+	"ngx_http_send_header(r)
+	调用ngx_http_top_header_filter(r)，最终会调用
+	ngx_http_header_filter将headers_in里的数据
+	组装成http头部格式，放到buf ，再通过
+	ngx_http_write_filter(r, &out)发送出去"->
+	"r->header_only
+	HEAD请求或者返回204 NO CONTENT时
+	r->header_only为真";
+	"r->header_only
+	HEAD请求或者返回204 NO CONTENT时
+	r->header_only为真" ->
+	"!u->buffering
+	设置proxy_buffering off时，u->buffering为false
+	线上一般是设置为off"[label=N];
+	"!u->buffering?
+	设置proxy_buffering off时，u->buffering为false
+	线上一般是设置为off"->"u->input_filter = ngx_http_upstream_non_buffered_filter"[label=Y];
+	"u->input_filter = ngx_http_upstream_non_buffered_filter"->
+	"u->read_event_handler = ngx_http_upstream_process_non_buffered_upstream
+	 r->write_event_handler = ngx_http_upstream_process_non_buffered_downstream";
+	"u->read_event_handler = ngx_http_upstream_process_non_buffered_upstream
+	 r->write_event_handler = ngx_http_upstream_process_non_buffered_downstream"->
+	"n = u->buffer.last - u->buffer.pos";
+	"n = u->buffer.last - u->buffer.pos"->"u->buffer.last = u->buffer.pos"[label="n>0"];
+	"u->buffer.last = u->buffer.pos"->"u->input_filter(u->input_filter_ctx, n)";
+	"u->input_filter(u->input_filter_ctx, n)"->"ngx_http_upstream_process_non_buffered_downstream(r)";
+	"ngx_http_upstream_process_non_buffered_downstream(r)"->"return";
+	"n = u->buffer.last - u->buffer.pos"->"u->buffer.pos = u->buffer.start"[label="n<=0"];
+	"u->buffer.pos = u->buffer.start"->"u->buffer.last = u->buffer.start";
+	"u->buffer.last = u->buffer.start"->"ngx_http_send_special(r, NGX_HTTP_FLUSH)";
+	"ngx_http_send_special(r, NGX_HTTP_FLUSH)"->"u->peer.connection->read->ready || u->length == 0";
+	"u->peer.connection->read->ready || u->length == 0"->"ngx_http_upstream_process_non_buffered_upstream(r, u)"[label=Y];
+	"ngx_http_upstream_process_non_buffered_upstream(r, u)"->"return";
+	"!u->buffering?
+	设置proxy_buffering off时，u->buffering为false
+	线上一般是设置为off"->
+	"u->read_event_handler = ngx_http_upstream_process_upstream
+	将upstream的读事件设置为ngx_http_upstream_process_upstream";
+	"u->read_event_handler = ngx_http_upstream_process_upstream
+	将upstream的读事件设置为ngx_http_upstream_process_upstream"->"ngx_http_upstream_process_upstream"[label=N];
+}
+

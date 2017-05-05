@@ -1,0 +1,32 @@
+digraph main {
+	"ngx_http_init_connection
+	accept时会调用该函数，如果是http则调用ngx_http_wait_request_handler
+	如果是http2则调用ngx_http_v2_init
+	如果是https则调用ngx_ssl_handshake
+	如果是quic则调用ngx_http_quic_init
+	此流程只描述http请求处理过程" 
+		-> "ngx_http_wait_request_handler";
+
+subgraph wait_request_handler {
+	label="ngx_http_wait_request_handler";
+	"ngx_http_wait_request_handler" -> 
+	"n = c->recv(c, b->last, size)
+	读取数据，如果n==NGX_AGAIN，重新加入读事件
+	如果n==0表示client关闭了连接
+	如果n== NGX_ERROR，表示出错，关闭连接";
+
+	"n = c->recv(c, b->last, size)
+	读取数据，如果n==NGX_AGAIN，重新加入读事件
+	如果n==0表示client关闭了连接
+	如果n== NGX_ERROR，表示出错，关闭连接" -> "c->data = ngx_http_create_request(c)";
+	"c->data = ngx_http_create_request(c)"->"rev->handler = ngx_http_process_request_line";
+	"rev->handler = ngx_http_process_request_line"->"ngx_http_process_request_line(rev)";
+}
+
+subgraph ngx_http_read_request_header {
+	label="ngx_http_process_request_line";
+	"ngx_http_process_request_line(rev)"->"ngx_http_read_request_header(r)";
+	"ngx_http_read_request_header(r)"->"ngx_http_parse_request_line(r, r->header_in)";
+
+}
+}
