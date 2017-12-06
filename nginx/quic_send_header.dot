@@ -1,0 +1,29 @@
+(gdb) bt
+#0  net::QuicSimpleServerStream::OnNginxHeaderAvailable (this=0x11c570e64fa0, 
+    header="HTTP/1.1 200 OK\000\000Server: nginx\000\000Date: Wed, 28 Jun 2017 12:36:12 GMT\000\000Content-Type: text/html\000\000Content-Length: 177\000\000Last-Modified: Wed, 28 Jun 2017 08:04:31 GMT\000\000Connection: close\000\000ETag: \"5953630f-b1\"\000\000"..., fin=false)
+    at src/http/quic/adaptor/ngx_quic_simple_server_stream.cc:328
+#1  0x0000000000523aaf in ngx_http_quic_response_header_available (stream=0x11c570e64fa0, 
+    buf=0x11c56764b268 "HTTP/1.1 200 OK\r\nServer: nginx\r\nDate: Wed, 28 Jun 2017 12:36:12 GMT\r\nContent-Type: text/html\r\nContent-Length: 177\r\nLast-Modified: Wed, 28 Jun 2017 08:04:31 GMT\r\nConnection: close\r\nETag: \"5953630f-b1\"\r"..., buf_len=276, finish=0)
+    at src/http/quic/adaptor/ngx_http_quic_adaptor.cc:241
+#2  0x00000000004c1822 in ngx_http_quic_header_filter (r=0x11c55c41d090, in=0x7fffffff15e8) at src/http/quic/ngx_http_quic_filter_module.c:139
+#3  0x00000000004bd73b in ngx_http_header_filter (r=0x11c55c41d090) at src/http/ngx_http_header_filter_module.c:626
+#4  0x00000000004bd94f in ngx_http_chunked_header_filter (r=0x11c55c41d090) at src/http/modules/ngx_http_chunked_filter_module.c:96
+#5  0x00000000004be05f in ngx_http_v2_header_filter (r=0x11c55c41d090) at src/http/v2/ngx_http_v2_filter_module.c:156
+#6  0x00000000004c18f3 in ngx_http_quic_headers_filter (r=0x11c55c41d090) at src/http/quic/ngx_http_quic_filter_module.c:88
+#7  0x00000000004c22a0 in ngx_http_range_header_filter (r=0x11c55c41d090) at src/http/modules/ngx_http_range_filter_module.c:270
+#8  0x00000000004c45e9 in ngx_http_gzip_header_filter (r=0x11c55c41d090) at src/http/modules/ngx_http_gzip_filter_module.c:257
+#9  0x00000000004ca3b0 in ngx_http_ssi_header_filter (r=0x11c55c41d090) at src/http/modules/ngx_http_ssi_filter_module.c:341
+#10 0x00000000004cdec9 in ngx_http_charset_header_filter (r=0x11c55c41d090) at src/http/modules/ngx_http_charset_filter_module.c:236
+#11 0x00000000004d12a0 in ngx_http_addition_header_filter (r=0x11c55c41d090) at src/http/modules/ngx_http_addition_filter_module.c:108
+#12 0x00000000004d25dc in ngx_http_userid_filter (r=0x11c55c41d090) at src/http/modules/ngx_http_userid_filter_module.c:209
+#13 0x00000000004d32f5 in ngx_http_headers_filter (r=0x11c55c41d090) at src/http/modules/ngx_http_headers_filter_module.c:208
+#14 0x00000000004d4c14 in ngx_http_not_modified_header_filter (r=0x11c55c41d090) at src/http/modules/ngx_http_not_modified_filter_module.c:108
+#15 0x000000000047cac7 in ngx_http_send_header (r=0x11c55c41d090) at src/http/ngx_http_core_module.c:1953
+#16 0x00000000005335c8 in ngx_http_static_handler (r=0x11c55c41d090) at src/http/modules/ngx_http_static_module.c:249
+#17 0x000000000047beb7 in ngx_http_core_content_phase (r=0x11c55c41d090, ph=0x11c55c4fd438) at src/http/ngx_http_core_module.c:1375
+#18 0x000000000047950f in ngx_http_core_run_phases (r=0x11c55c41d090) at src/http/ngx_http_core_module.c:845
+#19 0x000000000047947b in ngx_http_handler (r=0x11c55c41d090) at src/http/ngx_http_core_module.c:828
+#20 0x000000000048ab48 in ngx_http_process_request (r=0x11c55c41d090) at src/http/ngx_http_request.c:1925
+#21 0x00000000004d70be in ngx_http_quic_process_request_headers (r=0x11c55c41d090) at src/http/quic/ngx_http_quic.c:759
+#22 0x00000000004d63f4 in ngx_http_quic_process_request_line (r=0x11c55c41d090) at src/http/quic/ngx_http_quic.c:600
+#23 0x00000000004d5b39 in ngx_http_quic_init_http_request (quic_stream=0x11c570e64fa0, connection=0x11c55c524678, 

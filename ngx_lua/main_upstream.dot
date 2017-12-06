@@ -1,0 +1,42 @@
+digraph m {
+	"ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)"->
+	"c = u->peer.connection
+	表示和upstream的连接";
+	"c = u->peer.connection
+	表示和upstream的连接"->
+	"c->write->handler = ngx_http_upstream_handler;
+	 c->read->handler = ngx_http_upstream_handler;
+	upstream发生读写事件后，都会调用ngx_http_upstream_handler";
+	"c->write->handler = ngx_http_upstream_handler;
+	 c->read->handler = ngx_http_upstream_handler;
+	"u->write_event_handler = ngx_http_upstream_send_request_handler
+	u->read_event_handler = ngx_http_upstream_process_header";
+	"c->write->handler = ngx_http_upstream_handler;
+	 c->read->handler = ngx_http_upstream_handler;
+	upstream发生读写事件后，都会调用ngx_http_upstream_handler"->"ngx_http_upstream_handler"[color=grey,style=dashed];
+
+
+subgraph cluster_ngx_http_upstream_process_header {
+	label="ngx_http_upstream_process_header
+	"n = c->recv(c, u->buffer.last, u->buffer.end - u->buffer.last)"->
+	"rc = u->process_header(r)
+	初始函数为ngx_http_proxy_process_status_line";
+	"rc = u->process_header(r)
+	初始函数为ngx_http_proxy_process_status_line"->
+	"u.buffer满了，	说明头部数据过大，
+	一个buffer装不下，直接返回错误
+	upstream sent too big header"[label="rc==NGX_AGAIN"];
+	"u.buffer满了，	说明头部数据过大，
+	一个buffer装不下，直接返回错误
+	upstream sent too big header"[shape=plaintext];
+	"rc = u->process_header(r)
+	初始函数为ngx_http_proxy_process_status_line"->"u.buffer没满，继续for循环"[label="rc==NGX_AGAIN"];
+	"u.buffer没满，继续for循环"->"for ( ;; )";
+	"rc = u->process_header(r)
+	初始函数为ngx_http_proxy_process_status_line"->"ngx_http_upstream_process_headers(r, u)"[label="rc==NGX_OK"];
+	"ngx_http_upstream_process_headers(r, u)"->"ngx_http_upstream_send_response(r, u)"[label="!r->subrequest_in_memory"];
+	"ngx_http_upstream_send_response(r, u)"->"return";
+	"ngx_http_upstream_send_response(r, u)"->"void ngx_http_upstream_send_response(ngx_http_request_t *r,
+	 ngx_http_upstream_t *u)"[style=dashed];
+}
+}

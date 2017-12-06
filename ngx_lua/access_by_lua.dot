@@ -1,0 +1,9 @@
+digraph {
+"L = ngx_http_lua_get_lua_vm(r, NULL)" -> "ngx_http_lua_cache_loadbuffer";
+"ngx_http_lua_cache_loadbuffer"-> "ngx_http_lua_access_by_chunk";
+
+subgraph {
+
+
+}
+}
