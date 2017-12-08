@@ -8,6 +8,6 @@ subgraph cluster_ngx_http_lua_access_by_chunk {
     "lua_xmove(L, co, 1);"->"ngx_http_lua_get_globals_table(co);";
     "ngx_http_lua_get_globals_table(co);"-> "ngx_http_lua_set_req(co, r)";
     "ngx_http_lua_set_req(co, r)"->"c = ngx_http_lua_run_thread(L, r, ctx, 0)";
-    "c = ngx_http_lua_run_thread(L, r, ctx, 0)"->
+    "c = ngx_http_lua_run_thread(L, r, ctx, 0)"->"hi";
 }
 }
