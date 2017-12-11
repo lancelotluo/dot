@@ -1,0 +1,97 @@
+digraph {
+    "ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle)"->"lua_pushlightuserdata(L, cycle)"[style=dashed];
+    "lua_pushlightuserdata(L, cycle)"->"lua_setglobal(L, \"__ngx_cycle\")";
+    "lua_setglobal(L, \"__ngx_cycle\")"->"ngx_http_lua_inject_ndk_api(L)";
+    "ngx_http_lua_inject_ndk_api(L)"->"ngx_http_lua_inject_ngx_api(L, lmcf, log)";
+    "ngx_http_lua_inject_ngx_api(L, lmcf, log)"->"ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle)"[label=void, style=dashed];
+
+subgraph cluser_lua_inject_ngx_api {
+    "ngx_http_lua_inject_ngx_api(L, lmcf, log)"->"lua_createtable(L, 0 /* narr */, 116 /* nrec */)"[style=dashed];
+    "lua_createtable(L, 0 /* narr */, 116 /* nrec */)"->"lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context)";
+    "lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context)"->"lua_setfield(L, -2, \"_phase_ctx\")";
+    "lua_setfield(L, -2, \"_phase_ctx\")"->"ngx_http_lua_inject_arg_api(L)";
+    "ngx_http_lua_inject_arg_api(L)"->
+    "ngx_http_lua_inject_http_consts(L);
+    ngx_http_lua_inject_core_consts(L);
+
+    ngx_http_lua_inject_log_api(L);
+    ngx_http_lua_inject_output_api(L);
+    ngx_http_lua_inject_time_api(L);
+    ngx_http_lua_inject_string_api(L);
+    ngx_http_lua_inject_control_api(log, L);
+    ngx_http_lua_inject_subrequest_api(L);
+    ngx_http_lua_inject_sleep_api(L);
+    ngx_http_lua_inject_phase_api(L);
+
+#if (NGX_PCRE)
+    ngx_http_lua_inject_regex_api(L);
+#endif
+
+    ngx_http_lua_inject_req_api(log, L);
+    ngx_http_lua_inject_resp_header_api(L);
+    ngx_http_lua_create_headers_metatable(log, L);
+    ngx_http_lua_inject_variable_api(L);
+    ngx_http_lua_inject_shdict_api(lmcf, L);
+    ngx_http_lua_inject_socket_tcp_api(log, L);
+    ngx_http_lua_inject_socket_udp_api(log, L);
+    ngx_http_lua_inject_uthread_api(log, L);
+    ngx_http_lua_inject_timer_api(L);
+    ngx_http_lua_inject_config_api(L);
+    ngx_http_lua_inject_worker_api(L);
+
+    ngx_http_lua_inject_misc_api(L);";
+    "ngx_http_lua_inject_http_consts(L);
+    ngx_http_lua_inject_core_consts(L);
+
+    ngx_http_lua_inject_log_api(L);
+    ngx_http_lua_inject_output_api(L);
+    ngx_http_lua_inject_time_api(L);
+    ngx_http_lua_inject_string_api(L);
+    ngx_http_lua_inject_control_api(log, L);
+    ngx_http_lua_inject_subrequest_api(L);
+    ngx_http_lua_inject_sleep_api(L);
+    ngx_http_lua_inject_phase_api(L);
+
+#if (NGX_PCRE)
+    ngx_http_lua_inject_regex_api(L);
+#endif
+
+    ngx_http_lua_inject_req_api(log, L);
+    ngx_http_lua_inject_resp_header_api(L);
+    ngx_http_lua_create_headers_metatable(log, L);
+    ngx_http_lua_inject_variable_api(L);
+    ngx_http_lua_inject_shdict_api(lmcf, L);
+    ngx_http_lua_inject_socket_tcp_api(log, L);
+    ngx_http_lua_inject_socket_udp_api(log, L);
+    ngx_http_lua_inject_uthread_api(log, L);
+    ngx_http_lua_inject_timer_api(L);
+    ngx_http_lua_inject_config_api(L);
+    ngx_http_lua_inject_worker_api(L);
+
+    ngx_http_lua_inject_misc_api(L);"->
+    "lua_getglobal(L, \"package\"); /* ngx package */
+    lua_getfield(L, -1, \"loaded\"); /* ngx package loaded */
+    lua_pushvalue(L, -3); /* ngx package loaded ngx */
+    lua_setfield(L, -2, \"ngx\"); /* ngx package loaded */
+    lua_pop(L, 2);
+
+    lua_setglobal(L, \"ngx\")";
+    "lua_getglobal(L, \"package\"); /* ngx package */
+    lua_getfield(L, -1, \"loaded\"); /* ngx package loaded */
+    lua_pushvalue(L, -3); /* ngx package loaded ngx */
+    lua_setfield(L, -2, \"ngx\"); /* ngx package loaded */
+    lua_pop(L, 2);
+
+    lua_setglobal(L, \"ngx\")"->"ngx_http_lua_inject_coroutine_api(log, L)";
+    "ngx_http_lua_inject_coroutine_api(log, L)"->"ngx_http_lua_inject_ngx_api(L, lmcf, log)"[label=void, style=dashed];
+    }
+
+    subgraph cluster_ngx_http_lua_inject_output_api {
+    "ngx_http_lua_inject_output_api"->"lua_pushcfunction(L, ngx_http_lua_ngx_say)"[style=dashed];
+    "lua_pushcfunction(L, ngx_http_lua_ngx_say)"->"lua_setfield(L, -2, \"say\")";
+    "lua_setfield(L, -2, \"say\")"->"ngx_http_lua_inject_output_api"[label=void];
+    "ngx_http_lua_ngx_say"->"ngx_http_lua_ngx_echo(L, 1)";
+    "ngx_http_lua_ngx_echo(L, 1)"->"r = ngx_http_lua_get_req(L)"[style=dashed];
+    "r = ngx_http_lua_get_req(L)"->"rc = ngx_http_lua_send_chain_link(r, ctx, cl);";
+    }
+}

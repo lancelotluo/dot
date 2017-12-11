@@ -1,0 +1,7 @@
+digraph  {
+    "r = ngx_http_lua_get_req(L) 获取请求"->"nargs = lua_gettop(L)获取参数总数";
+    "nargs = lua_gettop(L)获取参数总数"->"for (i = 1; i <= nargs; i++)对参数进行遍历，类型检查和拼接";
+    "for (i = 1; i <= nargs; i++)对参数进行遍历，类型检查和拼接"->"rc = ngx_http_lua_send_chain_link(r, ctx, cl)内容发送";
+    "rc = ngx_http_lua_send_chain_link(r, ctx, cl)内容发送"->"这个函数就是nginx发送内容的逻辑类似，会根据条件调用ngx_http_lua_send_special,ngx_http_lua_output_filter等发送响应";
+
+}

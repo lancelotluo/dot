@@ -1,0 +1,27 @@
+digraph {
+    "lmcf->lua = ngx_http_lua_init_vm"-> "L = ngx_http_lua_new_state(parent_vm, cycle, lmcf, log);"[style=dashed];
+    "L = ngx_http_lua_new_state(parent_vm, cycle, lmcf, log);"->"L = luaL_newstate();"[style=dashed];
+    "L = ngx_http_lua_new_state(parent_vm, cycle, lmcf, log);"->"cln->handler = ngx_http_lua_cleanup_vm";
+    "cln->handler = ngx_http_lua_cleanup_vm"->"if (lmcf->preload_hooks)";
+    "if (lmcf->preload_hooks)"->"ngx_http_lua_probe_register_preload_package(L, hook[i].package);"[label=Y];
+    "ngx_http_lua_probe_register_preload_package(L, hook[i].package);"->"lua_pushcfunction(L, hook[i].loader);";
+    "lua_pushcfunction(L, hook[i].loader);"->"lua_setfield(L, -2, (char *) hook[i].package);"
+    "lua_setfield(L, -2, (char *) hook[i].package);"->"return L";
+    "if (lmcf->preload_hooks)"[shape=diamond];
+    "if (lmcf->preload_hooks)"->"return L"[label=N];
+    "return L"->"lmcf->lua = ngx_http_lua_init_vm"[style=dashed];
+
+    "L = luaL_newstate();"->"luaL_openlibs(L);";
+    "luaL_openlibs(L);"->"lua_getglobal(L, 'package');";
+    "lua_getglobal(L, 'package');"->"lua_pop(L, 1);";
+    "lua_pop(L, 1);"->"ngx_http_lua_init_registry(L, log);";
+
+    "ngx_http_lua_init_globals(L, cycle, lmcf, log);
+    这个函数非常重要，注册了大部分的lua和nginx交互的函数"[fontcolor=red];
+
+    "ngx_http_lua_init_registry(L, log);"->"ngx_http_lua_init_globals(L, cycle, lmcf, log);
+    这个函数非常重要，注册了大部分的lua和nginx交互的函数";
+    "ngx_http_lua_init_globals(L, cycle, lmcf, log);
+    这个函数非常重要，注册了大部分的lua和nginx交互的函数"->"L = ngx_http_lua_new_state(parent_vm, cycle, lmcf, log);"[label="return L"];
+}
+
