@@ -6,7 +6,7 @@ digraph {
     "ngx_http_lua_access_by_chunk(L, r)"->"入口函数ngx_http_lua_access_handler_inline"[style=dashed];
 
     subgraph cluster_ngx_http_lua_access_by_chunk {
-        "rc"[shape=diamond];
+      "rc"[shape=diamond];
         "co = ngx_http_lua_new_thread(r, L, &co_ref)"[color=red];
         "rc = ngx_http_lua_run_thread(L, r, ctx, 0)"[color=red];
 
@@ -15,7 +15,7 @@ digraph {
         "lua_xmove(L, co, 1)"->"ngx_http_lua_get_globals_table(co)";
         "ngx_http_lua_get_globals_table(co)"->"ngx_http_lua_set_req(co, r)";
         "ngx_http_lua_set_req(co, r)"->"rc = ngx_http_lua_run_thread(L, r, ctx, 0)";
-        
+
         "rc = ngx_http_lua_run_thread(L, r, ctx, 0)"->"rc";
         "rc"->"rc == NGX_ERROR || rc > NGX_OK";
         "rc == NGX_ERROR || rc > NGX_OK"->"ngx_http_lua_access_by_chunk(L, r)"[label=rc];

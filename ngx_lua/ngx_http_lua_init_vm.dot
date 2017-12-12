@@ -1,4 +1,5 @@
 digraph {
+    "lmcf->lua = ngx_http_lua_init_vm"[style=filled, fillcolor=green];
     "lmcf->lua = ngx_http_lua_init_vm"-> "L = ngx_http_lua_new_state(parent_vm, cycle, lmcf, log);"[style=dashed];
     "L = ngx_http_lua_new_state(parent_vm, cycle, lmcf, log);"->"L = luaL_newstate();"[style=dashed];
     "L = ngx_http_lua_new_state(parent_vm, cycle, lmcf, log);"->"cln->handler = ngx_http_lua_cleanup_vm";

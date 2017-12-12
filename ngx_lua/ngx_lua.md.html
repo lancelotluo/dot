@@ -1,106 +1,410 @@
-# 索引
-- [lua基础](#luabasic)
-- [lua和C的交互](#luac)
-- [lua在Nginx中的执行](#lua_nginx)
-- [ngx lua的局限](#ngx_lua_drawback)
-# <span id = "luabasic"> lua基础 </span>
-## lua线程和协程
-lua 不支持真正的多线程，主要有两个原因：
-1. ANSI C 不支持，所以lua也不好移植。
-2. 没有必要支持线程，原因是： 多线程为是低层语言设计的，出现BUG会导致Lua难以排查，甚至有可能出现安全问题。另外多线程的同步锁也会影响性能。Lua的线程就是协程加API。A thread is the essence of a coroutine in Lua. We can think of a coroutine as a
+<!DOCTYPE html>
+<html>
+  <head>
+      <meta charset="utf-8" />
+      <title>ngx_lua</title>
+      <style>.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(85, 85, 85); background-color: white; overflow: auto; }
+.markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
+.markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(3, 3, 3); }
+.markdown-preview:not([data-use-github-style]) h1 { font-size: 2.4em; font-weight: 300; }
+.markdown-preview:not([data-use-github-style]) h2 { font-size: 1.8em; font-weight: 400; }
+.markdown-preview:not([data-use-github-style]) h3 { font-size: 1.5em; font-weight: 500; }
+.markdown-preview:not([data-use-github-style]) h4 { font-size: 1.2em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h5 { font-size: 1.1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h6 { font-size: 1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) strong { color: rgb(3, 3, 3); }
+.markdown-preview:not([data-use-github-style]) del { color: rgb(126, 126, 126); }
+.markdown-preview:not([data-use-github-style]) a, .markdown-preview:not([data-use-github-style]) a code { color: black; }
+.markdown-preview:not([data-use-github-style]) img { max-width: 100%; }
+.markdown-preview:not([data-use-github-style]) > p { margin-top: 0px; margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) > ul, .markdown-preview:not([data-use-github-style]) > ol { margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) blockquote { margin: 1.5em 0px; font-size: inherit; color: rgb(126, 126, 126); border-color: rgb(214, 214, 214); border-width: 4px; }
+.markdown-preview:not([data-use-github-style]) hr { margin: 3em 0px; border-top: 2px dashed rgb(214, 214, 214); background: none; }
+.markdown-preview:not([data-use-github-style]) table { margin: 1.5em 0px; }
+.markdown-preview:not([data-use-github-style]) th { color: rgb(3, 3, 3); }
+.markdown-preview:not([data-use-github-style]) th, .markdown-preview:not([data-use-github-style]) td { padding: 0.66em 1em; border: 1px solid rgb(214, 214, 214); }
+.markdown-preview:not([data-use-github-style]) pre, .markdown-preview:not([data-use-github-style]) code { color: rgb(3, 3, 3); background-color: rgb(240, 240, 240); }
+.markdown-preview:not([data-use-github-style]) pre, .markdown-preview:not([data-use-github-style]) pre.editor-colors { margin: 1.5em 0px; padding: 1em; font-size: 0.92em; border-radius: 3px; background-color: rgb(245, 245, 245); }
+.markdown-preview:not([data-use-github-style]) kbd { color: rgb(3, 3, 3); border-width: 1px 1px 2px; border-style: solid; border-color: rgb(214, 214, 214) rgb(214, 214, 214) rgb(199, 199, 199); border-image: initial; background-color: rgb(240, 240, 240); }
+.markdown-preview[data-use-github-style] { font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif; line-height: 1.6; word-wrap: break-word; padding: 30px; font-size: 16px; color: rgb(51, 51, 51); background-color: rgb(255, 255, 255); overflow: scroll; }
+.markdown-preview[data-use-github-style] > :first-child { margin-top: 0px !important; }
+.markdown-preview[data-use-github-style] > :last-child { margin-bottom: 0px !important; }
+.markdown-preview[data-use-github-style] a:not([href]) { color: inherit; text-decoration: none; }
+.markdown-preview[data-use-github-style] .absent { color: rgb(204, 0, 0); }
+.markdown-preview[data-use-github-style] .anchor { position: absolute; top: 0px; left: 0px; display: block; padding-right: 6px; padding-left: 30px; margin-left: -30px; }
+.markdown-preview[data-use-github-style] .anchor:focus { outline: none; }
+.markdown-preview[data-use-github-style] h1, .markdown-preview[data-use-github-style] h2, .markdown-preview[data-use-github-style] h3, .markdown-preview[data-use-github-style] h4, .markdown-preview[data-use-github-style] h5, .markdown-preview[data-use-github-style] h6 { position: relative; margin-top: 1em; margin-bottom: 16px; font-weight: bold; line-height: 1.4; }
+.markdown-preview[data-use-github-style] h1 .octicon-link, .markdown-preview[data-use-github-style] h2 .octicon-link, .markdown-preview[data-use-github-style] h3 .octicon-link, .markdown-preview[data-use-github-style] h4 .octicon-link, .markdown-preview[data-use-github-style] h5 .octicon-link, .markdown-preview[data-use-github-style] h6 .octicon-link { display: none; color: rgb(0, 0, 0); vertical-align: middle; }
+.markdown-preview[data-use-github-style] h1:hover .anchor, .markdown-preview[data-use-github-style] h2:hover .anchor, .markdown-preview[data-use-github-style] h3:hover .anchor, .markdown-preview[data-use-github-style] h4:hover .anchor, .markdown-preview[data-use-github-style] h5:hover .anchor, .markdown-preview[data-use-github-style] h6:hover .anchor { padding-left: 8px; margin-left: -30px; text-decoration: none; }
+.markdown-preview[data-use-github-style] h1:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h2:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h3:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h4:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h5:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h6:hover .anchor .octicon-link { display: inline-block; }
+.markdown-preview[data-use-github-style] h1 tt, .markdown-preview[data-use-github-style] h2 tt, .markdown-preview[data-use-github-style] h3 tt, .markdown-preview[data-use-github-style] h4 tt, .markdown-preview[data-use-github-style] h5 tt, .markdown-preview[data-use-github-style] h6 tt, .markdown-preview[data-use-github-style] h1 code, .markdown-preview[data-use-github-style] h2 code, .markdown-preview[data-use-github-style] h3 code, .markdown-preview[data-use-github-style] h4 code, .markdown-preview[data-use-github-style] h5 code, .markdown-preview[data-use-github-style] h6 code { font-size: inherit; }
+.markdown-preview[data-use-github-style] h1 { padding-bottom: 0.3em; font-size: 2.25em; line-height: 1.2; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h1 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h2 { padding-bottom: 0.3em; font-size: 1.75em; line-height: 1.225; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h2 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h3 { font-size: 1.5em; line-height: 1.43; }
+.markdown-preview[data-use-github-style] h3 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h4 { font-size: 1.25em; }
+.markdown-preview[data-use-github-style] h4 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h5 { font-size: 1em; }
+.markdown-preview[data-use-github-style] h5 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] h6 { font-size: 1em; color: rgb(119, 119, 119); }
+.markdown-preview[data-use-github-style] h6 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] p, .markdown-preview[data-use-github-style] blockquote, .markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol, .markdown-preview[data-use-github-style] dl, .markdown-preview[data-use-github-style] table, .markdown-preview[data-use-github-style] pre { margin-top: 0px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] hr { height: 4px; padding: 0px; margin: 16px 0px; background-color: rgb(231, 231, 231); border: 0px none; }
+.markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol { padding-left: 2em; }
+.markdown-preview[data-use-github-style] ul.no-list, .markdown-preview[data-use-github-style] ol.no-list { padding: 0px; list-style-type: none; }
+.markdown-preview[data-use-github-style] ul ul, .markdown-preview[data-use-github-style] ul ol, .markdown-preview[data-use-github-style] ol ol, .markdown-preview[data-use-github-style] ol ul { margin-top: 0px; margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] li > p { margin-top: 16px; }
+.markdown-preview[data-use-github-style] dl { padding: 0px; }
+.markdown-preview[data-use-github-style] dl dt { padding: 0px; margin-top: 16px; font-size: 1em; font-style: italic; font-weight: bold; }
+.markdown-preview[data-use-github-style] dl dd { padding: 0px 16px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] blockquote { padding: 0px 15px; color: rgb(119, 119, 119); border-left: 4px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] blockquote > :first-child { margin-top: 0px; }
+.markdown-preview[data-use-github-style] blockquote > :last-child { margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] table { display: block; width: 100%; overflow: auto; word-break: keep-all; }
+.markdown-preview[data-use-github-style] table th { font-weight: bold; }
+.markdown-preview[data-use-github-style] table th, .markdown-preview[data-use-github-style] table td { padding: 6px 13px; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] table tr { background-color: rgb(255, 255, 255); border-top: 1px solid rgb(204, 204, 204); }
+.markdown-preview[data-use-github-style] table tr:nth-child(2n) { background-color: rgb(248, 248, 248); }
+.markdown-preview[data-use-github-style] img { max-width: 100%; box-sizing: border-box; }
+.markdown-preview[data-use-github-style] .emoji { max-width: none; }
+.markdown-preview[data-use-github-style] span.frame { display: block; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.frame > span { display: block; float: left; width: auto; padding: 7px; margin: 13px 0px 0px; overflow: hidden; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] span.frame span img { display: block; float: left; }
+.markdown-preview[data-use-github-style] span.frame span span { display: block; padding: 5px 0px 0px; clear: both; color: rgb(51, 51, 51); }
+.markdown-preview[data-use-github-style] span.align-center { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-center > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-center span img { margin: 0px auto; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-right { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-right > span { display: block; margin: 13px 0px 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] span.align-right span img { margin: 0px; text-align: right; }
+.markdown-preview[data-use-github-style] span.float-left { display: block; float: left; margin-right: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-left span { margin: 13px 0px 0px; }
+.markdown-preview[data-use-github-style] span.float-right { display: block; float: right; margin-left: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-right > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] code, .markdown-preview[data-use-github-style] tt { padding: 0.2em 0px; margin: 0px; font-size: 85%; background-color: rgba(0, 0, 0, 0.0392157); border-radius: 3px; }
+.markdown-preview[data-use-github-style] code::before, .markdown-preview[data-use-github-style] tt::before, .markdown-preview[data-use-github-style] code::after, .markdown-preview[data-use-github-style] tt::after { letter-spacing: -0.2em; content: " "; }
+.markdown-preview[data-use-github-style] code br, .markdown-preview[data-use-github-style] tt br { display: none; }
+.markdown-preview[data-use-github-style] del code { text-decoration: inherit; }
+.markdown-preview[data-use-github-style] pre > code { padding: 0px; margin: 0px; font-size: 100%; word-break: normal; white-space: pre; background: transparent; border: 0px; }
+.markdown-preview[data-use-github-style] .highlight { margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] .highlight pre, .markdown-preview[data-use-github-style] pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; background-color: rgb(247, 247, 247); border-radius: 3px; }
+.markdown-preview[data-use-github-style] .highlight pre { margin-bottom: 0px; word-break: normal; }
+.markdown-preview[data-use-github-style] pre { word-wrap: normal; }
+.markdown-preview[data-use-github-style] pre code, .markdown-preview[data-use-github-style] pre tt { display: inline; max-width: initial; padding: 0px; margin: 0px; overflow: initial; line-height: inherit; word-wrap: normal; background-color: transparent; border: 0px; }
+.markdown-preview[data-use-github-style] pre code::before, .markdown-preview[data-use-github-style] pre tt::before, .markdown-preview[data-use-github-style] pre code::after, .markdown-preview[data-use-github-style] pre tt::after { content: normal; }
+.markdown-preview[data-use-github-style] kbd { display: inline-block; padding: 3px 5px; font-size: 11px; line-height: 10px; color: rgb(85, 85, 85); vertical-align: middle; background-color: rgb(252, 252, 252); border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204) rgb(204, 204, 204) rgb(187, 187, 187); border-image: initial; border-radius: 3px; box-shadow: rgb(187, 187, 187) 0px -1px 0px inset; }
+.markdown-preview[data-use-github-style] a { color: rgb(51, 122, 183); }
+.markdown-preview[data-use-github-style] pre, .markdown-preview[data-use-github-style] code { color: inherit; }
+.markdown-preview[data-use-github-style] pre, .markdown-preview[data-use-github-style] pre.editor-colors { padding: 0.8em 1em; margin-bottom: 1em; font-size: 0.85em; border-radius: 4px; overflow: auto; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors .horizontal-scrollbar { visibility: hidden; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors:hover .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors:hover .horizontal-scrollbar { visibility: visible; }
+.markdown-preview del { text-decoration: none; position: relative; }
+.markdown-preview del::after { border-bottom: 1px solid black; content: ""; left: 0px; position: absolute; right: 0px; top: 50%; }
+.markdown-preview .flash { animation: flash 1s ease-out 1; outline: rgba(255, 0, 0, 0) solid 1px; }
+.markdown-preview .flash:not(li) { display: block; }
+.bracket-matcher .region {
+  border-bottom: 1px dotted lime;
+  position: absolute;
+}
+.line-number.bracket-matcher {
+  background-color: #777;
+}
+
+.spell-check-misspelling .region {
+  border-bottom: 2px dotted rgba(255, 51, 51, 0.75);
+}
+.spell-check-corrections {
+  width: 25em !important;
+}
+
+pre.editor-colors {
+  background-color: white;
+  color: #555;
+}
+pre.editor-colors .invisible-character {
+  color: rgba(85, 85, 85, 0.2);
+}
+pre.editor-colors .indent-guide {
+  color: rgba(85, 85, 85, 0.2);
+}
+pre.editor-colors .wrap-guide {
+  background-color: rgba(85, 85, 85, 0.2);
+}
+pre.editor-colors .gutter {
+  color: #555;
+  background: white;
+}
+pre.editor-colors .gutter .line-number.folded,
+pre.editor-colors .gutter .line-number:after,
+pre.editor-colors .fold-marker:after {
+  color: #e87b00;
+}
+pre.editor-colors .invisible {
+  color: #555;
+}
+pre.editor-colors .selection .region {
+  background-color: #e1e1e1;
+}
+pre.editor-colors .bracket-matcher .region {
+  background-color: #C9C9C9;
+  opacity: .7;
+  border-bottom: 0 none;
+}
+pre.editor-colors.is-focused .cursor {
+  border-color: black;
+}
+pre.editor-colors.is-focused .selection .region {
+  background-color: #afc4da;
+}
+pre.editor-colors.is-focused .line-number.cursor-line-no-selection,
+pre.editor-colors.is-focused .line.cursor-line {
+  background-color: rgba(255, 255, 134, 0.34);
+}
+pre.editor-colors .syntax--source.syntax--gfm {
+  color: #444;
+}
+pre.editor-colors .syntax--gfm .syntax--markup.syntax--heading {
+  color: #111;
+}
+pre.editor-colors .syntax--gfm .syntax--link {
+  color: #888;
+}
+pre.editor-colors .syntax--gfm .syntax--variable.syntax--list {
+  color: #888;
+}
+pre.editor-colors .syntax--markdown .syntax--paragraph {
+  color: #444;
+}
+pre.editor-colors .syntax--markdown .syntax--heading {
+  color: #111;
+}
+pre.editor-colors .syntax--markdown .syntax--link {
+  color: #888;
+}
+pre.editor-colors .syntax--markdown .syntax--link .syntax--string {
+  color: #888;
+}
+.syntax--comment {
+  color: #999988;
+  font-style: italic;
+}
+.syntax--string {
+  color: #D14;
+}
+.syntax--string .syntax--source,
+.syntax--string .syntax--meta.syntax--embedded.syntax--line {
+  color: #5A5A5A;
+}
+.syntax--string .syntax--punctuation.syntax--section.syntax--embedded {
+  color: #920B2D;
+}
+.syntax--string .syntax--punctuation.syntax--section.syntax--embedded .syntax--source {
+  color: #920B2D;
+}
+.syntax--constant.syntax--numeric {
+  color: #D14;
+}
+.syntax--constant.syntax--language {
+  color: #606aa1;
+}
+.syntax--constant.syntax--character,
+.syntax--constant.syntax--other {
+  color: #606aa1;
+}
+.syntax--constant.syntax--symbol {
+  color: #990073;
+}
+.syntax--constant.syntax--numeric.syntax--line-number.syntax--find-in-files .syntax--match {
+  color: rgba(143, 190, 0, 0.63);
+}
+.syntax--variable {
+  color: #008080;
+}
+.syntax--variable.syntax--parameter {
+  color: #606aa1;
+}
+.syntax--keyword {
+  color: #222;
+  font-weight: bold;
+}
+.syntax--keyword.syntax--unit {
+  color: #445588;
+}
+.syntax--keyword.syntax--special-method {
+  color: #0086B3;
+}
+.syntax--storage {
+  color: #222;
+}
+.syntax--storage.syntax--type {
+  color: #222;
+}
+.syntax--entity.syntax--name.syntax--class {
+  text-decoration: underline;
+  color: #606aa1;
+}
+.syntax--entity.syntax--other.syntax--inherited-class {
+  text-decoration: underline;
+  color: #606aa1;
+}
+.syntax--entity.syntax--name.syntax--function {
+  color: #900;
+}
+.syntax--entity.syntax--name.syntax--tag {
+  color: #008080;
+}
+.syntax--entity.syntax--other.syntax--attribute-name {
+  color: #458;
+  font-weight: bold;
+}
+.syntax--entity.syntax--name.syntax--filename.syntax--find-in-files {
+  color: #E6DB74;
+}
+.syntax--support.syntax--constant,
+.syntax--support.syntax--function,
+.syntax--support.syntax--type {
+  color: #458;
+}
+.syntax--support.syntax--class {
+  color: #008080;
+}
+.syntax--invalid {
+  color: #F8F8F0;
+  background-color: #00A8C6;
+}
+.syntax--invalid.syntax--deprecated {
+  color: #F8F8F0;
+  background-color: #8FBE00;
+}
+.syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--double.syntax--json,
+.syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--double.syntax--json .syntax--punctuation.syntax--string {
+  color: #000080;
+}
+.syntax--meta.syntax--structure.syntax--dictionary.syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--double.syntax--json {
+  color: #d14;
+}
+.syntax--meta.syntax--diff,
+.syntax--meta.syntax--diff.syntax--header {
+  color: #75715E;
+}
+.syntax--css.syntax--support.syntax--property-name {
+  font-weight: bold;
+  color: #333;
+}
+.syntax--css.syntax--constant {
+  color: #099;
+}
+</style>
+  </head>
+  <body class='markdown-preview'><h1>索引</h1>
+<ul>
+<li><a href="#luabasic">lua基础</a></li>
+<li><a href="#luac">lua和C的交互</a></li>
+<li><a href="#lua_nginx">lua在Nginx中的执行</a></li>
+<li><a href="#ngx_lua_drawback">ngx lua的局限</a></li>
+</ul>
+<h1><span id="luabasic"> lua基础 </span></h1>
+<h2>lua线程和协程</h2>
+<p>lua 不支持真正的多线程，主要有两个原因：</p>
+<ol>
+<li>ANSI C 不支持，所以lua也不好移植。</li>
+<li>没有必要支持线程，原因是： 多线程为是低层语言设计的，出现BUG会导致Lua难以排查，甚至有可能出现安全问题。另外多线程的同步锁也会影响性能。Lua的线程就是协程加API。A thread is the essence of a coroutine in Lua. We can think of a coroutine as a
 thread plus a nice interface, or we can think of a thread as a coroutine with a
-lower-level API
-## lua函数用法
-- **lua_pcall**  
+lower-level API</li>
+</ol>
+<h2>lua函数用法</h2>
+<ul>
+<li><strong>lua_pcall</strong><br>
 lua_pcall(L, narg, nres, 0),第二个参数是调用函数的参数个数，第三个参数是返回结果的个数，第四个参数是错误处理的函数。
 The second and third arguments to lua_pcall are the number of arguments
 you are passing and the number of results you want. The fourth argument
-indicates an error-handling function;
-```
-* call a function 'f' defined in Lua */
-double f (lua_State *L, double x, double y) {
-int isnum;
-double z;
-/* push functions and arguments */
-lua_getglobal(L, "f"); /* function to be called */
-lua_pushnumber(L, x);
-/* push 1st argument */
-lua_pushnumber(L, y);
-/* push 2nd argument */
-/* do the call (2 arguments, 1 result) */
-if (lua_pcall(L, 2, 1, 0) != LUA_OK)
-error(L, "error running function 'f': %s",
-lua_tostring(L, -1));
-}
-/* retrieve result */
-z = lua_tonumberx(L, -1, &isnum);
-if (!isnum)
-error(L, "function 'f' must return a number");
-lua_pop(L, 1); /* pop returned value */
-return z;
-```
-
-# <span id = "luac"> lua和C的交互 </span>
-###示例程序
-
-```
-#include <stdio.h>
-#include <string.h>
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-int main (void) {
-  char buff[256];
-  int error;
-  lua_State *L = luaL_newstate();
-  /* opens Lua */
-  luaL_openlibs(L);
-  /* opens the standard libraries */
-  while (fgets(buff, sizeof(buff), stdin) != NULL) {
-      error = luaL_loadstring(L, buff) || lua_pcall(L, 0, 0, 0);
-      if (error) {
-          fprintf(stderr, "%s\n", lua_tostring(L, -1));
-          lua_pop(L, 1); /* pop error message from the stack */
-      }
-  }
-
-  lua_close(L);
-  return 0;
-}
-```
-有几点说明：
-1. The header file lauxlib.h defines the functions provided by the auxiliary
-library (auxlib). All its definitions start with luaL_
-2. The Lua library defines no global variables at all. It keeps all its state in
+indicates an error-handling function;</li>
+</ul>
+<pre class="editor-colors"><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>*&nbsp;call&nbsp;a&nbsp;function&nbsp;'f'&nbsp;defined&nbsp;in&nbsp;Lua&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>double&nbsp;f&nbsp;(lua_State&nbsp;*L,&nbsp;double&nbsp;x,&nbsp;double&nbsp;y)&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>int&nbsp;isnum;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>double&nbsp;z;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>/*&nbsp;push&nbsp;functions&nbsp;and&nbsp;arguments&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>lua_getglobal(L,&nbsp;"f");&nbsp;/*&nbsp;function&nbsp;to&nbsp;be&nbsp;called&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>lua_pushnumber(L,&nbsp;x);</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>/*&nbsp;push&nbsp;1st&nbsp;argument&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>lua_pushnumber(L,&nbsp;y);</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>/*&nbsp;push&nbsp;2nd&nbsp;argument&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>/*&nbsp;do&nbsp;the&nbsp;call&nbsp;(2&nbsp;arguments,&nbsp;1&nbsp;result)&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>if&nbsp;(lua_pcall(L,&nbsp;2,&nbsp;1,&nbsp;0)&nbsp;!=&nbsp;LUA_OK)</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>error(L,&nbsp;"error&nbsp;running&nbsp;function&nbsp;'f':&nbsp;%s",</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>lua_tostring(L,&nbsp;-1));</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>/*&nbsp;retrieve&nbsp;result&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>z&nbsp;=&nbsp;lua_tonumberx(L,&nbsp;-1,&nbsp;&amp;isnum);</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>if&nbsp;(!isnum)</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>error(L,&nbsp;"function&nbsp;'f'&nbsp;must&nbsp;return&nbsp;a&nbsp;number");</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>lua_pop(L,&nbsp;1);&nbsp;/*&nbsp;pop&nbsp;returned&nbsp;value&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>return&nbsp;z;</span></span>
+</div></pre>
+<h1><span id="luac"> lua和C的交互 </span></h1>
+<h3>示例程序</h3>
+<pre class="editor-colors"><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>#include&nbsp;&lt;stdio.h&gt;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>#include&nbsp;&lt;string.h&gt;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>#include&nbsp;"lua.h"</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>#include&nbsp;"lauxlib.h"</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>#include&nbsp;"lualib.h"</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>int&nbsp;main&nbsp;(void)&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;char&nbsp;buff[256];</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;int&nbsp;error;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;lua_State&nbsp;*L&nbsp;=&nbsp;luaL_newstate();</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;/*&nbsp;opens&nbsp;Lua&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;luaL_openlibs(L);</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;/*&nbsp;opens&nbsp;the&nbsp;standard&nbsp;libraries&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;while&nbsp;(fgets(buff,&nbsp;sizeof(buff),&nbsp;stdin)&nbsp;!=&nbsp;NULL)&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error&nbsp;=&nbsp;luaL_loadstring(L,&nbsp;buff)&nbsp;||&nbsp;lua_pcall(L,&nbsp;0,&nbsp;0,&nbsp;0);</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(error)&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;"%s\n",&nbsp;lua_tostring(L,&nbsp;-1));</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lua_pop(L,&nbsp;1);&nbsp;/*&nbsp;pop&nbsp;error&nbsp;message&nbsp;from&nbsp;the&nbsp;stack&nbsp;*/</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;lua_close(L);</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;return&nbsp;0;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>}</span></span>
+</div></pre>
+<p>有几点说明：</p>
+<ol>
+<li>The header file lauxlib.h defines the functions provided by the auxiliary
+library (auxlib). All its definitions start with luaL_</li>
+<li>The Lua library defines no global variables at all. It keeps all its state in
 the dynamic structure lua_State ; all functions inside Lua receive a pointer to
 this structure as an argument. This implementation makes Lua reentrant and
-ready to be used in multithreaded code.
-3. As its name implies, the luaL_newstate function creates a new Lua state.
+ready to be used in multithreaded code.</li>
+<li>As its name implies, the luaL_newstate function creates a new Lua state.
 When luaL_newstate creates a fresh state, its environment contains no prede-
 fined functions, not even print . To keep Lua small, all standard libraries are
 provided as separate packages, so that you do not have to use them if you do
 not need to. The header file lualib.h defines functions to open the libraries.
-Function luaL_openlibs opens all standard libraries
-4. luaL_loadstring编译代码，然后将函数压入栈。
-5. lua_pcall在保护模式下调用函数。
-### stack的重要性
-lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递参数，还是
-
-# <span id="lua_nginx">lua在Nginx中的执行<span>
- ## 总体执行流程
- 1. 将ngx_http_lua_module注册为最后一个module.
- 2. lua_module执行post_configuration回调时，调用ngx_http_lua_init.
- 3. [**ngx_http_lua_init**](#ngx_http_lua_init)完成启动时的主要初始工作。这里面也会注册一些常用的变量和函数，包括控制指令。可以参考[ngx_lua如何ngx.say和ngx.sleep](#ngx.say)?
- 4. 之后的一些指令主要是通过各个模块完成，比如access_by_lua, content_by_lua等。
-
-### ngx_http_lua_init流程
-1. 初始化几个 handlers，h = ngx_array_push(&cmcf->phases[NGX_HTTP_REWRITE_PHASE].handlers);  类似的还有*h = ngx_http_lua_access_handler；ngx_http_lua_log_handler
- *h = ngx_http_lua_rewrite_handler
-2. 最重要的工作就是ngx_http_lua_init_vm,并将初始化的vm赋值给lmcf->lua 。重点介绍一下：
-
-#### ngx_http_lua_init_vm的流程
-
-<!DOCTYPE svg [<!ENTITY nbsp "&#160;">]><svg width="1331pt" height="594pt" viewBox="0 0 1331 594" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+Function luaL_openlibs opens all standard libraries</li>
+<li>luaL_loadstring编译代码，然后将函数压入栈。</li>
+<li>lua_pcall在保护模式下调用函数。</li>
+</ol>
+<h3>stack的重要性</h3>
+<p>lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递参数，还是</p>
+<h1><span id="lua_nginx">lua在Nginx中的执行<span></span></span></h1>
+<h2>总体执行流程</h2>
+<ol>
+<li>将ngx_http_lua_module注册为最后一个module.</li>
+<li>lua_module执行post_configuration回调时，调用ngx_http_lua_init.</li>
+<li><a href="#ngx_http_lua_init"><strong>ngx_http_lua_init</strong></a>完成启动时的主要初始工作。这里面也会注册一些常用的变量和函数，包括控制指令。可以参考<a href="#ngx.say">ngx_lua如何ngx.say和ngx.sleep</a>?</li>
+<li>之后的一些指令主要是通过各个模块完成，比如access_by_lua, content_by_lua等。</li>
+</ol>
+<h3>ngx_http_lua_init流程</h3>
+<ol>
+<li>初始化几个 handlers，h = ngx_array_push(&amp;cmcf-&gt;phases[NGX_HTTP_REWRITE_PHASE].handlers);  类似的还有*h = ngx_http_lua_access_handler；ngx_http_lua_log_handler
+*h = ngx_http_lua_rewrite_handler</li>
+<li>最重要的工作就是ngx_http_lua_init_vm,并将初始化的vm赋值给lmcf-&gt;lua 。重点介绍一下：</li>
+</ol>
+<h4>ngx_http_lua_init_vm的流程</h4>
+]&gt;<svg width="1331pt" height="594pt" viewBox="0 0 1331 594" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 589.6313)">
 <title>%0</title>
 <polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-589.6313 1326.7324,-589.6313 1326.7324,4 -4,4"></polygon>
@@ -296,10 +600,8 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
 </g>
 </g>
 </svg>
-
-其中有一个函数非常重要，ngx_http_lua_init_globals,它的过程如下：
-
-<!DOCTYPE svg [<!ENTITY nbsp "&#160;">]><svg width="664pt" height="1663pt" viewBox="0 0 664 1663" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<p>其中有一个函数非常重要，ngx_http_lua_init_globals,它的过程如下：</p>
+]&gt;<svg width="664pt" height="1663pt" viewBox="0 0 664 1663" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1659.0869)">
 <title>%0</title>
 <polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-1659.0869 660.0784,-1659.0869 660.0784,4 -4,4"></polygon>
@@ -414,90 +716,82 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
 </g>
 <!-- ngx_http_lua_inject_http_consts(L);
  &#160;&#160;&#160;ngx_http_lua_inject_core_consts(L);
-
- &#160;&#160;&#160;ngx_http_lua_inject_log_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_output_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_time_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_string_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_control_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_subrequest_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_sleep_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &#160;&#160;&#160;ngx_http_lua_inject_regex_api(L);
-#endif
-
- &#160;&#160;&#160;ngx_http_lua_inject_req_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_resp_header_api(L);
- &#160;&#160;&#160;ngx_http_lua_create_headers_metatable(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_variable_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_shdict_api(lmcf, L);
- &#160;&#160;&#160;ngx_http_lua_inject_socket_tcp_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_socket_udp_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_uthread_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_timer_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_config_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_worker_api(L);
-
- &#160;&#160;&#160;ngx_http_lua_inject_misc_api(L); -->
-<g id="node10" class="node">
+<p>   ngx_http_lua_inject_log_api(L);
+   ngx_http_lua_inject_output_api(L);
+   ngx_http_lua_inject_time_api(L);
+   ngx_http_lua_inject_string_api(L);
+   ngx_http_lua_inject_control_api(log, L);
+   ngx_http_lua_inject_subrequest_api(L);
+   ngx_http_lua_inject_sleep_api(L);
+   ngx_http_lua_inject_phase_api(L);</p>
+<h1>if (NGX_PCRE)</h1>
+<p>   ngx_http_lua_inject_regex_api(L);</p>
+<h1>endif</h1>
+<p>   ngx_http_lua_inject_req_api(log, L);
+   ngx_http_lua_inject_resp_header_api(L);
+   ngx_http_lua_create_headers_metatable(log, L);
+   ngx_http_lua_inject_variable_api(L);
+   ngx_http_lua_inject_shdict_api(lmcf, L);
+   ngx_http_lua_inject_socket_tcp_api(log, L);
+   ngx_http_lua_inject_socket_udp_api(log, L);
+   ngx_http_lua_inject_uthread_api(log, L);
+   ngx_http_lua_inject_timer_api(L);
+   ngx_http_lua_inject_config_api(L);
+   ngx_http_lua_inject_worker_api(L);</p>
+<p>   ngx_http_lua_inject_misc_api(L); --&gt;
+<g id="node10" class="node"></p>
 <title>ngx_http_lua_inject_http_consts(L);
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_core_consts(L);
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);
-#endif
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);</title>
+<p>   ngx_http_lua_inject_log_api(L);
+   ngx_http_lua_inject_output_api(L);
+   ngx_http_lua_inject_time_api(L);
+   ngx_http_lua_inject_string_api(L);
+   ngx_http_lua_inject_control_api(log, L);
+   ngx_http_lua_inject_subrequest_api(L);
+   ngx_http_lua_inject_sleep_api(L);
+   ngx_http_lua_inject_phase_api(L);</p>
+<h1>if (NGX_PCRE)</h1>
+<p>   ngx_http_lua_inject_regex_api(L);</p>
+<h1>endif</h1>
+<p>   ngx_http_lua_inject_req_api(log, L);
+   ngx_http_lua_inject_resp_header_api(L);
+   ngx_http_lua_create_headers_metatable(log, L);
+   ngx_http_lua_inject_variable_api(L);
+   ngx_http_lua_inject_shdict_api(lmcf, L);
+   ngx_http_lua_inject_socket_tcp_api(log, L);
+   ngx_http_lua_inject_socket_udp_api(log, L);
+   ngx_http_lua_inject_uthread_api(log, L);
+   ngx_http_lua_inject_timer_api(L);
+   ngx_http_lua_inject_config_api(L);
+   ngx_http_lua_inject_worker_api(L);</p>
+<p>   ngx_http_lua_inject_misc_api(L);</title>
 <ellipse fill="none" stroke="#000000" cx="254.495" cy="-634.3904" rx="213.7634" ry="347.7931"></ellipse>
 <text text-anchor="middle" x="254.495" y="-863.7904" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_inject_http_consts(L);</text>
-<text text-anchor="middle" x="254.495" y="-846.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_core_consts(L);</text>
-<text text-anchor="middle" x="254.495" y="-814.1904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-797.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-780.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-763.7904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-746.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-730.1904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-713.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-696.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-846.9904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_core_consts(L);</text>
+<text text-anchor="middle" x="254.495" y="-814.1904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_log_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-797.3904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_output_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-780.5904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_time_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-763.7904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_string_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-746.9904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_control_api(log, L);</text>
+<text text-anchor="middle" x="254.495" y="-730.1904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_subrequest_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-713.3904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_sleep_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-696.5904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_phase_api(L);</text>
 <text text-anchor="middle" x="254.495" y="-663.7904" font-family="Times,serif" font-size="14.00" fill="#000000">#if (NGX_PCRE)</text>
-<text text-anchor="middle" x="254.495" y="-646.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-646.9904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_regex_api(L);</text>
 <text text-anchor="middle" x="254.495" y="-630.1904" font-family="Times,serif" font-size="14.00" fill="#000000">#endif</text>
-<text text-anchor="middle" x="254.495" y="-597.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-580.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-563.7904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-546.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-530.1904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);</text>
-<text text-anchor="middle" x="254.495" y="-513.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-496.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-479.7904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-462.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-446.1904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-429.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-396.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);</text>
-</g>
+<text text-anchor="middle" x="254.495" y="-597.3904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_req_api(log, L);</text>
+<text text-anchor="middle" x="254.495" y="-580.5904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_resp_header_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-563.7904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_create_headers_metatable(log, L);</text>
+<text text-anchor="middle" x="254.495" y="-546.9904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_variable_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-530.1904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_shdict_api(lmcf, L);</text>
+<text text-anchor="middle" x="254.495" y="-513.3904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_socket_tcp_api(log, L);</text>
+<text text-anchor="middle" x="254.495" y="-496.5904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_socket_udp_api(log, L);</text>
+<text text-anchor="middle" x="254.495" y="-479.7904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_uthread_api(log, L);</text>
+<text text-anchor="middle" x="254.495" y="-462.9904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_timer_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-446.1904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_config_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-429.3904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_worker_api(L);</text>
+<text text-anchor="middle" x="254.495" y="-396.5904" font-family="Times,serif" font-size="14.00" fill="#000000">    ngx_http_lua_inject_misc_api(L);</text>
+</g></p>
 <!-- ngx_http_lua_inject_arg_api(L)&#45;&gt;ngx_http_lua_inject_http_consts(L);
  &#160;&#160;&#160;ngx_http_lua_inject_core_consts(L);
 
@@ -530,36 +824,32 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
 <g id="edge10" class="edge">
 <title>ngx_http_lua_inject_arg_api(L)-&gt;ngx_http_lua_inject_http_consts(L);
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_core_consts(L);
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);
-#endif
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);</title>
+<p>&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);</p>
+<h1>if (NGX_PCRE)</h1>
+<p>&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);</p>
+<h1>endif</h1>
+<p>&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);</p>
+<p>&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);
 <path fill="none" stroke="#000000" d="M254.495,-1019.1926C254.495,-1012.0415 254.495,-1002.9932 254.495,-992.4534"></path>
 <polygon fill="#000000" stroke="#000000" points="257.9951,-992.3662 254.495,-982.3663 250.9951,-992.3663 257.9951,-992.3662"></polygon>
-</g>
+</p>
 <!-- lua_getglobal(L, &quot;package&quot;); /* ngx package */
  &#160;&#160;&#160;lua_getfield(L, &#45;1, &quot;loaded&quot;); /* ngx package loaded */
  &#160;&#160;&#160;lua_pushvalue(L, &#45;3); /* ngx package loaded ngx */
@@ -573,16 +863,15 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
  &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /* ngx package loaded ngx */
  &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, "ngx"); /* ngx package loaded */
  &nbsp;&nbsp;&nbsp;lua_pop(L, 2);
-
- &nbsp;&nbsp;&nbsp;lua_setglobal(L, "ngx")</title>
+&lt;p&gt;&nbsp;&nbsp;&nbsp;lua_setglobal(L, “ngx”)</title>
 <ellipse fill="none" stroke="#000000" cx="254.495" cy="-161.2469" rx="237.8719" ry="88.4945"></ellipse>
-<text text-anchor="middle" x="254.495" y="-207.0469" font-family="Times,serif" font-size="14.00" fill="#000000">lua_getglobal(L, "package"); /* ngx package */</text>
-<text text-anchor="middle" x="254.495" y="-190.2469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_getfield(L, -1, "loaded"); /* ngx package loaded */</text>
-<text text-anchor="middle" x="254.495" y="-173.4469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /* ngx package loaded ngx */</text>
-<text text-anchor="middle" x="254.495" y="-156.6469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, "ngx"); /* ngx package loaded */</text>
+<text text-anchor="middle" x="254.495" y="-207.0469" font-family="Times,serif" font-size="14.00" fill="#000000">lua_getglobal(L, “package”); /* ngx package <em>/</em></text><em>
+<text text-anchor="middle" x="254.495" y="-190.2469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_getfield(L, -1, “loaded”); /</text></em> ngx package loaded <em>/
+<text text-anchor="middle" x="254.495" y="-173.4469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /</text></em> ngx package loaded ngx <em>/
+<text text-anchor="middle" x="254.495" y="-156.6469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, “ngx”); /</text></em> ngx package loaded */
 <text text-anchor="middle" x="254.495" y="-139.8469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_pop(L, 2);</text>
-<text text-anchor="middle" x="254.495" y="-107.0469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_setglobal(L, "ngx")</text>
-</g>
+<text text-anchor="middle" x="254.495" y="-107.0469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_setglobal(L, “ngx”)</text>
+</g><p></p>
 <!-- ngx_http_lua_inject_http_consts(L);
  &#160;&#160;&#160;ngx_http_lua_inject_core_consts(L);
 
@@ -621,42 +910,37 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
 <g id="edge11" class="edge">
 <title>ngx_http_lua_inject_http_consts(L);
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_core_consts(L);
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);
-#endif
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);-&gt;lua_getglobal(L, "package"); /* ngx package */
- &nbsp;&nbsp;&nbsp;lua_getfield(L, -1, "loaded"); /* ngx package loaded */
- &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /* ngx package loaded ngx */
- &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, "ngx"); /* ngx package loaded */
- &nbsp;&nbsp;&nbsp;lua_pop(L, 2);
-
- &nbsp;&nbsp;&nbsp;lua_setglobal(L, "ngx")</title>
+&lt;p&gt;&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);&lt;/p&gt;
+&lt;h1&gt;if (NGX_PCRE)&lt;/h1&gt;
+&lt;p&gt;&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);&lt;/p&gt;
+&lt;h1&gt;endif&lt;/h1&gt;
+&lt;p&gt;&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);
+&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);&lt;/p&gt;
+&lt;p&gt;&nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);-&gt;lua_getglobal(L, “package”); /* ngx package &lt;em&gt;/
+&nbsp;&nbsp;&nbsp;lua_getfield(L, -1, “loaded”); /&lt;/em&gt; ngx package loaded &lt;em&gt;/
+&nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /&lt;/em&gt; ngx package loaded ngx &lt;em&gt;/
+&nbsp;&nbsp;&nbsp;lua_setfield(L, -2, “ngx”); /&lt;/em&gt; ngx package loaded */
+&nbsp;&nbsp;&nbsp;lua_pop(L, 2);&lt;/p&gt;
+&lt;p&gt;&nbsp;&nbsp;&nbsp;lua_setglobal(L, “ngx”)</title>
 <path fill="none" stroke="#000000" d="M254.495,-286.4885C254.495,-277.271 254.495,-268.3456 254.495,-259.7905"></path>
 <polygon fill="#000000" stroke="#000000" points="257.9951,-259.5442 254.495,-249.5442 250.9951,-259.5442 257.9951,-259.5442"></polygon>
-</g>
+</g><p></p>
 <!-- ngx_http_lua_inject_coroutine_api(log, L) -->
 <g id="node12" class="node">
 <title>ngx_http_lua_inject_coroutine_api(log, L)</title>
@@ -668,19 +952,17 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
  &#160;&#160;&#160;lua_pushvalue(L, &#45;3); /* ngx package loaded ngx */
  &#160;&#160;&#160;lua_setfield(L, &#45;2, &quot;ngx&quot;); /* ngx package loaded */
  &#160;&#160;&#160;lua_pop(L, 2);
-
- &#160;&#160;&#160;lua_setglobal(L, &quot;ngx&quot;)&#45;&gt;ngx_http_lua_inject_coroutine_api(log, L) -->
-<g id="edge12" class="edge">
+<p>   lua_setglobal(L, “ngx”)-&gt;ngx_http_lua_inject_coroutine_api(log, L) --&gt;
+<g id="edge12" class="edge"></p>
 <title>lua_getglobal(L, "package"); /* ngx package */
  &nbsp;&nbsp;&nbsp;lua_getfield(L, -1, "loaded"); /* ngx package loaded */
  &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /* ngx package loaded ngx */
  &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, "ngx"); /* ngx package loaded */
  &nbsp;&nbsp;&nbsp;lua_pop(L, 2);
-
- &nbsp;&nbsp;&nbsp;lua_setglobal(L, "ngx")-&gt;ngx_http_lua_inject_coroutine_api(log, L)</title>
+<p>   lua_setglobal(L, “ngx”)-&gt;ngx_http_lua_inject_coroutine_api(log, L)</title>
 <path fill="none" stroke="#000000" d="M332.2465,-77.5051C343.7293,-65.1376 354.7512,-53.2665 363.8885,-43.4253"></path>
 <polygon fill="#000000" stroke="#000000" points="366.5459,-45.7071 370.7852,-35.9973 361.4161,-40.9442 366.5459,-45.7071"></polygon>
-</g>
+</g></p>
 <!-- ngx_http_lua_inject_coroutine_api(log, L)&#45;&gt;ngx_http_lua_inject_ngx_api(L, lmcf, log) -->
 <g id="edge13" class="edge">
 <title>ngx_http_lua_inject_coroutine_api(log, L)-&gt;ngx_http_lua_inject_ngx_api(L, lmcf, log)</title>
@@ -688,22 +970,18 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
 <polygon fill="#000000" stroke="#000000" points="478.3366,-1320.8554 470.7232,-1328.2233 481.2696,-1327.2113 478.3366,-1320.8554"></polygon>
 <text text-anchor="middle" x="532.9403" y="-1077.4869" font-family="Times,serif" font-size="14.00" fill="#000000">void</text>
 </g>
-</g>
-</svg>
-
-
-
-
-### access_by_lua指令的执行流程
-access_by_lua指令由ngx_http_lua_access_handler_inline函数实现。主要流程如下：
-1. 调用ngx_http_lua_cache_loadbuffer加载代码。
-2. 调用ngx_http_lua_access_by_chunk(L, r)执行。
-3. ngx_http_lua_access_by_chunk(L, r)首先创建一个coroutine，这样就不会阻塞主进程。
-4. 然后调用ngx_http_lua_run_thread执行。
-5. 最后根据执行结果进行善后并返回。
-
-详细的调用逻辑可以参考下图：
-
+</title></g>
+</g></svg>
+<h3>access_by_lua指令的执行流程</h3>
+<p>access_by_lua指令由ngx_http_lua_access_handler_inline函数实现。主要流程如下：</p>
+<ol>
+<li>调用ngx_http_lua_cache_loadbuffer加载代码。</li>
+<li>调用ngx_http_lua_access_by_chunk(L, r)执行。</li>
+<li>ngx_http_lua_access_by_chunk(L, r)首先创建一个coroutine，这样就不会阻塞主进程。</li>
+<li>然后调用ngx_http_lua_run_thread执行。</li>
+<li>最后根据执行结果进行善后并返回。</li>
+</ol>
+<p>详细的调用逻辑可以参考下图：</p>
 <svg width="1674pt" height="1177pt" viewBox="0 0 1674 1177" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1172.6)">
 <title>%0</title>
@@ -957,25 +1235,22 @@ access_by_lua指令由ngx_http_lua_access_handler_inline函数实现。主要流
 </g>
 </g>
 </svg>
-
-### <span id = "ngx_http_lua_init"> ngx_http_lua_init流程 </span>
-### <span id = "ngx.say"> ngx_lua如何实现ngx.say和ngx.sleep </span>
-先看一段示例配置：
-```    server {
-        listen    80;
-
-        location /test2 {
-            content_by_lua_block {
-                ngx.say("hello")
-                ngx.flush() -- 显式的向客户端刷新响应输出
-                ngx.sleep(3)
-                ngx.say("the world")
-            }
-        }
-```
-ngx.say 由ngx_http_lua_inject_output_api通过lua_pushcfunction注册，由gx_http_lua_ngx_echo(lua_State *L, unsigned newline)负责实现。
-它的逻辑简述如下：
-
+<h3><span id="ngx_http_lua_init"> ngx_http_lua_init流程 </span></h3>
+<h3><span id="ngx.say"> ngx_lua如何实现ngx.say和ngx.sleep </span></h3>
+<p>先看一段示例配置：</p>
+<pre class="editor-colors lang-server"><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listen&nbsp;&nbsp;&nbsp;&nbsp;80;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;location&nbsp;/test2&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;content_by_lua_block&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ngx.say("hello")</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ngx.flush()&nbsp;--&nbsp;显式的向客户端刷新响应输出</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ngx.sleep(3)</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ngx.say("the&nbsp;world")</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div></pre>
+<p>ngx.say 由ngx_http_lua_inject_output_api通过lua_pushcfunction注册，由gx_http_lua_ngx_echo(lua_State *L, unsigned newline)负责实现。
+它的逻辑简述如下：</p>
 <svg width="1098pt" height="332pt" viewBox="0 0 1098 332" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 328)">
 <title>%0</title>
@@ -1036,16 +1311,5 @@ ngx.say 由ngx_http_lua_inject_output_api通过lua_pushcfunction注册，由gx_h
 </g>
 </g>
 </svg>
-
-# <span id = ngx_lua_drawback> ngx lua的局限<span>
-## 1. 功能局限：  
- lua只是嵌入到nginx的11个阶段中的部分阶段（REWRITE ACCESS CONTENT LOG阶段）：  
-- 无法支持server级别的动态加载
-- 非上诉4个阶段的功能无法通过lua实现，比如公有云为了实现虚拟化，通过对socket进行setsockopt、 ssl协议版本的配置等功能
-- 不支持spdy ,quic协议
-## 2. 开发成本大
-- nginx个性化配置的动态加载（包括新增修改nginx中的lua配置）：每个新增配置需要通过lua实现，无法直接复用nginx现有模块
-- 和stgw当前实现及nginx现有配置相比，改动很大，运营系统升级成本高
-## 3. 维护成本高
-- OpenResty 对lua支持更加完善，但对于同步nginx原生代码至少存在2个月的滞后
-- 需要同时维护nginx和OpenResty代码，维护成本变高
+<h1><span id="ngx_lua_drawback"> ngx lua的局限<span></span></span></h1></body>
+</html>
