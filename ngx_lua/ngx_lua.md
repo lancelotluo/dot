@@ -2,10 +2,29 @@
 - [lua基础](#luabasic)
 - [lua和C的交互](#luac)
 - [lua在Nginx中的执行](#lua_nginx)
+- [ngx_lua如何实现ngx.say和ngx.sleep](#ngx_say)
+- [KONG (API GW)的实现](#kong)
 - [ngx lua的局限](#ngx_lua_drawback)
 # <span id = "luabasic"> lua基础 </span>
+## luaJIT 和lua
+openresty目前使用luaJIT 编译lua。
+luajit是一个即时编译器，相比lua标准解释器性能要好很多。原因是：
+1. luajit使用自定义的字节码格式，解析快。
+2. luajit使用汇编重写了解释器。
+3. 使用了直接分发。
+
+mike pall本人的回答可以参考：
+http://article.gmane.org/gmane.comp.lang.lua.general/58908
+从lua_pcall的实现看一下区别：
+### lua_pcall标准实现
+```
+
+```
+### lua_pacll luaJIT实现
+
+
 ## lua线程和协程
-lua 不支持真正的多线程，主要有两个原因：
+lua 不支持真正的多线程，主要有[如下原因](https://www.quora.com/What-makes-LuaJIT-faster-than-Lua)：
 1. ANSI C 不支持，所以lua也不好移植。
 2. 没有必要支持线程，原因是： 多线程为是低层语言设计的，出现BUG会导致Lua难以排查，甚至有可能出现安全问题。另外多线程的同步锁也会影响性能。Lua的线程就是协程加API。A thread is the essence of a coroutine in Lua. We can think of a coroutine as a
 thread plus a nice interface, or we can think of a thread as a coroutine with a
@@ -299,273 +318,162 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
 
 其中有一个函数非常重要，ngx_http_lua_init_globals,它的过程如下：
 
-<!DOCTYPE svg [<!ENTITY nbsp "&#160;">]><svg width="664pt" height="1663pt" viewBox="0 0 664 1663" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1659.0869)">
+<!DOCTYPE svg [<!ENTITY nbsp "&#160;">]><svg width="664pt" height="1122pt" viewBox="0 0 664 1122" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1118.2917)">
 <title>%0</title>
-<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-1659.0869 660.0784,-1659.0869 660.0784,4 -4,4"></polygon>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-1118.2917 660.0784,-1118.2917 660.0784,4 -4,4"></polygon>
 <!-- ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle) -->
 <g id="node1" class="node">
 <title>ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle)</title>
-<ellipse fill="#00ff00" stroke="#000000" cx="408.495" cy="-1637.0869" rx="247.6668" ry="18"></ellipse>
-<text text-anchor="middle" x="408.495" y="-1632.8869" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle)</text>
+<ellipse fill="#00ff00" stroke="#000000" cx="408.495" cy="-1096.2917" rx="247.6668" ry="18"></ellipse>
+<text text-anchor="middle" x="408.495" y="-1092.0917" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle)</text>
 </g>
 <!-- lua_pushlightuserdata(L, cycle) -->
 <g id="node2" class="node">
 <title>lua_pushlightuserdata(L, cycle)</title>
-<ellipse fill="none" stroke="#000000" cx="325.495" cy="-1564.0869" rx="133.1277" ry="18"></ellipse>
-<text text-anchor="middle" x="325.495" y="-1559.8869" font-family="Times,serif" font-size="14.00" fill="#000000">lua_pushlightuserdata(L, cycle)</text>
+<ellipse fill="none" stroke="#000000" cx="325.495" cy="-1023.2917" rx="133.1277" ry="18"></ellipse>
+<text text-anchor="middle" x="325.495" y="-1019.0917" font-family="Times,serif" font-size="14.00" fill="#000000">lua_pushlightuserdata(L, cycle)</text>
 </g>
 <!-- ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle)&#45;&gt;lua_pushlightuserdata(L, cycle) -->
 <g id="edge1" class="edge">
 <title>ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle)-&gt;lua_pushlightuserdata(L, cycle)</title>
-<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M387.9782,-1619.042C377.525,-1609.8483 364.6616,-1598.5346 353.3287,-1588.5672"></path>
-<polygon fill="#000000" stroke="#000000" points="355.5963,-1585.9004 345.7759,-1581.9243 350.9733,-1591.1567 355.5963,-1585.9004"></polygon>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M387.9782,-1078.2467C377.525,-1069.053 364.6616,-1057.7394 353.3287,-1047.7719"></path>
+<polygon fill="#000000" stroke="#000000" points="355.5963,-1045.1052 345.7759,-1041.129 350.9733,-1050.3614 355.5963,-1045.1052"></polygon>
 </g>
 <!-- lua_setglobal(L, &quot;__ngx_cycle&quot;) -->
 <g id="node3" class="node">
 <title>lua_setglobal(L, "__ngx_cycle")</title>
-<ellipse fill="none" stroke="#000000" cx="316.495" cy="-1491.0869" rx="136.8161" ry="18"></ellipse>
-<text text-anchor="middle" x="316.495" y="-1486.8869" font-family="Times,serif" font-size="14.00" fill="#000000">lua_setglobal(L, "__ngx_cycle")</text>
+<ellipse fill="none" stroke="#000000" cx="316.495" cy="-950.2917" rx="136.8161" ry="18"></ellipse>
+<text text-anchor="middle" x="316.495" y="-946.0917" font-family="Times,serif" font-size="14.00" fill="#000000">lua_setglobal(L, "__ngx_cycle")</text>
 </g>
 <!-- lua_pushlightuserdata(L, cycle)&#45;&gt;lua_setglobal(L, &quot;__ngx_cycle&quot;) -->
 <g id="edge2" class="edge">
 <title>lua_pushlightuserdata(L, cycle)-&gt;lua_setglobal(L, "__ngx_cycle")</title>
-<path fill="none" stroke="#000000" d="M323.2703,-1546.042C322.2751,-1537.9698 321.0784,-1528.2633 319.9695,-1519.2687"></path>
-<polygon fill="#000000" stroke="#000000" points="323.4227,-1518.6738 318.7253,-1509.1773 316.4753,-1519.5304 323.4227,-1518.6738"></polygon>
+<path fill="none" stroke="#000000" d="M323.2703,-1005.2467C322.2751,-997.1745 321.0784,-987.468 319.9695,-978.4734"></path>
+<polygon fill="#000000" stroke="#000000" points="323.4227,-977.8786 318.7253,-968.382 316.4753,-978.7352 323.4227,-977.8786"></polygon>
 </g>
 <!-- ngx_http_lua_inject_ndk_api(L) -->
 <g id="node4" class="node">
 <title>ngx_http_lua_inject_ndk_api(L)</title>
-<ellipse fill="none" stroke="#000000" cx="322.495" cy="-1418.0869" rx="136.6072" ry="18"></ellipse>
-<text text-anchor="middle" x="322.495" y="-1413.8869" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_inject_ndk_api(L)</text>
+<ellipse fill="none" stroke="#000000" cx="322.495" cy="-877.2917" rx="136.6072" ry="18"></ellipse>
+<text text-anchor="middle" x="322.495" y="-873.0917" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_inject_ndk_api(L)</text>
 </g>
 <!-- lua_setglobal(L, &quot;__ngx_cycle&quot;)&#45;&gt;ngx_http_lua_inject_ndk_api(L) -->
 <g id="edge3" class="edge">
 <title>lua_setglobal(L, "__ngx_cycle")-&gt;ngx_http_lua_inject_ndk_api(L)</title>
-<path fill="none" stroke="#000000" d="M317.9782,-1473.042C318.6416,-1464.9698 319.4394,-1455.2633 320.1787,-1446.2687"></path>
-<polygon fill="#000000" stroke="#000000" points="323.6771,-1446.4304 321.0081,-1436.1773 316.7007,-1445.8569 323.6771,-1446.4304"></polygon>
+<path fill="none" stroke="#000000" d="M317.9782,-932.2467C318.6416,-924.1745 319.4394,-914.468 320.1787,-905.4734"></path>
+<polygon fill="#000000" stroke="#000000" points="323.6771,-905.6351 321.0081,-895.382 316.7007,-905.0617 323.6771,-905.6351"></polygon>
 </g>
 <!-- ngx_http_lua_inject_ngx_api(L, lmcf, log) -->
 <g id="node5" class="node">
 <title>ngx_http_lua_inject_ngx_api(L, lmcf, log)</title>
-<ellipse fill="none" stroke="#000000" cx="405.495" cy="-1345.0869" rx="176.4973" ry="18"></ellipse>
-<text text-anchor="middle" x="405.495" y="-1340.8869" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_inject_ngx_api(L, lmcf, log)</text>
+<ellipse fill="none" stroke="#000000" cx="405.495" cy="-804.2917" rx="176.4973" ry="18"></ellipse>
+<text text-anchor="middle" x="405.495" y="-800.0917" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_inject_ngx_api(L, lmcf, log)</text>
 </g>
 <!-- ngx_http_lua_inject_ndk_api(L)&#45;&gt;ngx_http_lua_inject_ngx_api(L, lmcf, log) -->
 <g id="edge4" class="edge">
 <title>ngx_http_lua_inject_ndk_api(L)-&gt;ngx_http_lua_inject_ngx_api(L, lmcf, log)</title>
-<path fill="none" stroke="#000000" d="M343.0119,-1400.042C353.387,-1390.9169 366.1366,-1379.7034 377.4073,-1369.7906"></path>
-<polygon fill="#000000" stroke="#000000" points="379.7291,-1372.4097 384.9265,-1363.1773 375.1061,-1367.1534 379.7291,-1372.4097"></polygon>
+<path fill="none" stroke="#000000" d="M343.0119,-859.2467C353.387,-850.1216 366.1366,-838.9081 377.4073,-828.9953"></path>
+<polygon fill="#000000" stroke="#000000" points="379.7291,-831.6144 384.9265,-822.382 375.1061,-826.3582 379.7291,-831.6144"></polygon>
 </g>
 <!-- ngx_http_lua_inject_ngx_api(L, lmcf, log)&#45;&gt;ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle) -->
 <g id="edge5" class="edge">
 <title>ngx_http_lua_inject_ngx_api(L, lmcf, log)-&gt;ngx_http_lua_init_globals(lua_State *L, ngx_cycle_t *cycle)</title>
-<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M447.0029,-1362.7572C468.1656,-1374.8215 489.495,-1393.1631 489.495,-1418.0869 489.495,-1564.0869 489.495,-1564.0869 489.495,-1564.0869 489.495,-1585.0735 474.3053,-1601.5733 457.0815,-1613.5368"></path>
-<polygon fill="#000000" stroke="#000000" points="455.0362,-1610.6908 448.5204,-1619.0451 458.8239,-1616.5775 455.0362,-1610.6908"></polygon>
-<text text-anchor="middle" x="501.9403" y="-1486.8869" font-family="Times,serif" font-size="14.00" fill="#000000">void</text>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M447.0029,-821.962C468.1656,-834.0263 489.495,-852.3678 489.495,-877.2917 489.495,-1023.2917 489.495,-1023.2917 489.495,-1023.2917 489.495,-1044.2782 474.3053,-1060.778 457.0815,-1072.7415"></path>
+<polygon fill="#000000" stroke="#000000" points="455.0362,-1069.8955 448.5204,-1078.2498 458.8239,-1075.7823 455.0362,-1069.8955"></polygon>
+<text text-anchor="middle" x="501.9403" y="-946.0917" font-family="Times,serif" font-size="14.00" fill="#000000">void</text>
 </g>
 <!-- lua_createtable(L, 0 /* narr */, 116 /* nrec */) -->
 <g id="node6" class="node">
 <title>lua_createtable(L, 0 /* narr */, 116 /* nrec */)</title>
-<ellipse fill="none" stroke="#000000" cx="290.495" cy="-1272.0869" rx="187.4474" ry="18"></ellipse>
-<text text-anchor="middle" x="290.495" y="-1267.8869" font-family="Times,serif" font-size="14.00" fill="#000000">lua_createtable(L, 0 /* narr */, 116 /* nrec */)</text>
+<ellipse fill="none" stroke="#000000" cx="290.495" cy="-731.2917" rx="187.4474" ry="18"></ellipse>
+<text text-anchor="middle" x="290.495" y="-727.0917" font-family="Times,serif" font-size="14.00" fill="#000000">lua_createtable(L, 0 /* narr */, 116 /* nrec */)</text>
 </g>
 <!-- ngx_http_lua_inject_ngx_api(L, lmcf, log)&#45;&gt;lua_createtable(L, 0 /* narr */, 116 /* nrec */) -->
 <g id="edge6" class="edge">
 <title>ngx_http_lua_inject_ngx_api(L, lmcf, log)-&gt;lua_createtable(L, 0 /* narr */, 116 /* nrec */)</title>
-<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M377.3629,-1327.2291C362.3266,-1317.6844 343.6279,-1305.8147 327.4346,-1295.5356"></path>
-<polygon fill="#000000" stroke="#000000" points="329.0538,-1292.4177 318.7353,-1290.0134 325.3023,-1298.3276 329.0538,-1292.4177"></polygon>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M377.3629,-786.4339C362.3266,-776.8891 343.6279,-765.0195 327.4346,-754.7403"></path>
+<polygon fill="#000000" stroke="#000000" points="329.0538,-751.6225 318.7353,-749.2181 325.3023,-757.5323 329.0538,-751.6225"></polygon>
 </g>
 <!-- lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context) -->
 <g id="node7" class="node">
 <title>lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context)</title>
-<ellipse fill="none" stroke="#000000" cx="246.495" cy="-1199.0869" rx="246.4901" ry="18"></ellipse>
-<text text-anchor="middle" x="246.495" y="-1194.8869" font-family="Times,serif" font-size="14.00" fill="#000000">lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context)</text>
+<ellipse fill="none" stroke="#000000" cx="246.495" cy="-658.2917" rx="246.4901" ry="18"></ellipse>
+<text text-anchor="middle" x="246.495" y="-654.0917" font-family="Times,serif" font-size="14.00" fill="#000000">lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context)</text>
 </g>
 <!-- lua_createtable(L, 0 /* narr */, 116 /* nrec */)&#45;&gt;lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context) -->
 <g id="edge7" class="edge">
 <title>lua_createtable(L, 0 /* narr */, 116 /* nrec */)-&gt;lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context)</title>
-<path fill="none" stroke="#000000" d="M279.6186,-1254.042C274.4887,-1245.5311 268.2639,-1235.2034 262.6014,-1225.8088"></path>
-<polygon fill="#000000" stroke="#000000" points="265.5587,-1223.9351 257.3988,-1217.1773 259.5635,-1227.5486 265.5587,-1223.9351"></polygon>
+<path fill="none" stroke="#000000" d="M279.6186,-713.2467C274.4887,-704.7358 268.2639,-694.4082 262.6014,-685.0136"></path>
+<polygon fill="#000000" stroke="#000000" points="265.5587,-683.1398 257.3988,-676.382 259.5635,-686.7534 265.5587,-683.1398"></polygon>
 </g>
 <!-- lua_setfield(L, &#45;2, &quot;_phase_ctx&quot;) -->
 <g id="node8" class="node">
 <title>lua_setfield(L, -2, "_phase_ctx")</title>
-<ellipse fill="none" stroke="#000000" cx="251.495" cy="-1126.0869" rx="137.3725" ry="18"></ellipse>
-<text text-anchor="middle" x="251.495" y="-1121.8869" font-family="Times,serif" font-size="14.00" fill="#000000">lua_setfield(L, -2, "_phase_ctx")</text>
+<ellipse fill="none" stroke="#000000" cx="251.495" cy="-585.2917" rx="137.3725" ry="18"></ellipse>
+<text text-anchor="middle" x="251.495" y="-581.0917" font-family="Times,serif" font-size="14.00" fill="#000000">lua_setfield(L, -2, "_phase_ctx")</text>
 </g>
 <!-- lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context)&#45;&gt;lua_setfield(L, &#45;2, &quot;_phase_ctx&quot;) -->
 <g id="edge8" class="edge">
 <title>lua_pushcfunction(L, ngx_http_lua_get_raw_phase_context)-&gt;lua_setfield(L, -2, "_phase_ctx")</title>
-<path fill="none" stroke="#000000" d="M247.731,-1181.042C248.2839,-1172.9698 248.9487,-1163.2633 249.5648,-1154.2687"></path>
-<polygon fill="#000000" stroke="#000000" points="253.0644,-1154.3931 250.256,-1144.1773 246.0807,-1153.9147 253.0644,-1154.3931"></polygon>
+<path fill="none" stroke="#000000" d="M247.731,-640.2467C248.2839,-632.1745 248.9487,-622.468 249.5648,-613.4734"></path>
+<polygon fill="#000000" stroke="#000000" points="253.0644,-613.5978 250.256,-603.382 246.0807,-613.1194 253.0644,-613.5978"></polygon>
 </g>
 <!-- ngx_http_lua_inject_arg_api(L) -->
 <g id="node9" class="node">
 <title>ngx_http_lua_inject_arg_api(L)</title>
-<ellipse fill="none" stroke="#000000" cx="254.495" cy="-1037.2869" rx="134.2964" ry="18"></ellipse>
-<text text-anchor="middle" x="254.495" y="-1033.0869" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_inject_arg_api(L)</text>
+<ellipse fill="none" stroke="#000000" cx="254.495" cy="-496.4917" rx="134.2964" ry="18"></ellipse>
+<text text-anchor="middle" x="254.495" y="-492.2917" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_inject_arg_api(L)</text>
 </g>
 <!-- lua_setfield(L, &#45;2, &quot;_phase_ctx&quot;)&#45;&gt;ngx_http_lua_inject_arg_api(L) -->
 <g id="edge9" class="edge">
 <title>lua_setfield(L, -2, "_phase_ctx")-&gt;ngx_http_lua_inject_arg_api(L)</title>
-<path fill="none" stroke="#000000" d="M252.1166,-1107.6875C252.5256,-1095.5818 253.0691,-1079.4946 253.5333,-1065.7543"></path>
-<polygon fill="#000000" stroke="#000000" points="257.0448,-1065.4714 253.8845,-1055.3589 250.0487,-1065.235 257.0448,-1065.4714"></polygon>
+<path fill="none" stroke="#000000" d="M252.1166,-566.8922C252.5256,-554.7865 253.0691,-538.6993 253.5333,-524.959"></path>
+<polygon fill="#000000" stroke="#000000" points="257.0448,-524.6762 253.8845,-514.5637 250.0487,-524.4398 257.0448,-524.6762"></polygon>
 </g>
 <!-- ngx_http_lua_inject_http_consts(L);
  &#160;&#160;&#160;ngx_http_lua_inject_core_consts(L);
-
- &#160;&#160;&#160;ngx_http_lua_inject_log_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_output_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_time_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_string_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_control_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_subrequest_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_sleep_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &#160;&#160;&#160;ngx_http_lua_inject_regex_api(L);
-#endif
-
+ &#160;&#160;&#160;...
  &#160;&#160;&#160;ngx_http_lua_inject_req_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_resp_header_api(L);
- &#160;&#160;&#160;ngx_http_lua_create_headers_metatable(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_variable_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_shdict_api(lmcf, L);
- &#160;&#160;&#160;ngx_http_lua_inject_socket_tcp_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_socket_udp_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_uthread_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_timer_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_config_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_worker_api(L);
-
+ &#160;&#160;&#160;...
  &#160;&#160;&#160;ngx_http_lua_inject_misc_api(L); -->
 <g id="node10" class="node">
 <title>ngx_http_lua_inject_http_consts(L);
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_core_consts(L);
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);
-#endif
-
+ &nbsp;&nbsp;&nbsp;...
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);
-
+ &nbsp;&nbsp;&nbsp;...
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);</title>
-<ellipse fill="none" stroke="#000000" cx="254.495" cy="-634.3904" rx="213.7634" ry="347.7931"></ellipse>
-<text text-anchor="middle" x="254.495" y="-863.7904" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_inject_http_consts(L);</text>
-<text text-anchor="middle" x="254.495" y="-846.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_core_consts(L);</text>
-<text text-anchor="middle" x="254.495" y="-814.1904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-797.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-780.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-763.7904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-746.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-730.1904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-713.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-696.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-663.7904" font-family="Times,serif" font-size="14.00" fill="#000000">#if (NGX_PCRE)</text>
-<text text-anchor="middle" x="254.495" y="-646.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-630.1904" font-family="Times,serif" font-size="14.00" fill="#000000">#endif</text>
-<text text-anchor="middle" x="254.495" y="-597.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-580.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-563.7904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-546.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-530.1904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);</text>
-<text text-anchor="middle" x="254.495" y="-513.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-496.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-479.7904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);</text>
-<text text-anchor="middle" x="254.495" y="-462.9904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-446.1904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-429.3904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);</text>
-<text text-anchor="middle" x="254.495" y="-396.5904" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);</text>
+<ellipse fill="none" stroke="#000000" cx="254.495" cy="-364.5584" rx="168.0494" ry="76.8665"></ellipse>
+<text text-anchor="middle" x="254.495" y="-402.3584" font-family="Times,serif" font-size="14.00" fill="#000000">ngx_http_lua_inject_http_consts(L);</text>
+<text text-anchor="middle" x="254.495" y="-385.5584" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_core_consts(L);</text>
+<text text-anchor="middle" x="254.495" y="-368.7584" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;...</text>
+<text text-anchor="middle" x="254.495" y="-351.9584" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);</text>
+<text text-anchor="middle" x="254.495" y="-335.1584" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;...</text>
+<text text-anchor="middle" x="254.495" y="-318.3584" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);</text>
 </g>
 <!-- ngx_http_lua_inject_arg_api(L)&#45;&gt;ngx_http_lua_inject_http_consts(L);
  &#160;&#160;&#160;ngx_http_lua_inject_core_consts(L);
-
- &#160;&#160;&#160;ngx_http_lua_inject_log_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_output_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_time_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_string_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_control_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_subrequest_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_sleep_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &#160;&#160;&#160;ngx_http_lua_inject_regex_api(L);
-#endif
-
+ &#160;&#160;&#160;...
  &#160;&#160;&#160;ngx_http_lua_inject_req_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_resp_header_api(L);
- &#160;&#160;&#160;ngx_http_lua_create_headers_metatable(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_variable_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_shdict_api(lmcf, L);
- &#160;&#160;&#160;ngx_http_lua_inject_socket_tcp_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_socket_udp_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_uthread_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_timer_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_config_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_worker_api(L);
-
+ &#160;&#160;&#160;...
  &#160;&#160;&#160;ngx_http_lua_inject_misc_api(L); -->
 <g id="edge10" class="edge">
 <title>ngx_http_lua_inject_arg_api(L)-&gt;ngx_http_lua_inject_http_consts(L);
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_core_consts(L);
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);
-#endif
-
+ &nbsp;&nbsp;&nbsp;...
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);
-
+ &nbsp;&nbsp;&nbsp;...
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);</title>
-<path fill="none" stroke="#000000" d="M254.495,-1019.1926C254.495,-1012.0415 254.495,-1002.9932 254.495,-992.4534"></path>
-<polygon fill="#000000" stroke="#000000" points="257.9951,-992.3662 254.495,-982.3663 250.9951,-992.3663 257.9951,-992.3662"></polygon>
+<path fill="none" stroke="#000000" d="M254.495,-478.4235C254.495,-470.9605 254.495,-461.7228 254.495,-451.762"></path>
+<polygon fill="#000000" stroke="#000000" points="257.9951,-451.599 254.495,-441.5991 250.9951,-451.5991 257.9951,-451.599"></polygon>
 </g>
 <!-- lua_getglobal(L, &quot;package&quot;); /* ngx package */
  &#160;&#160;&#160;lua_getfield(L, &#45;1, &quot;loaded&quot;); /* ngx package loaded */
  &#160;&#160;&#160;lua_pushvalue(L, &#45;3); /* ngx package loaded ngx */
  &#160;&#160;&#160;lua_setfield(L, &#45;2, &quot;ngx&quot;); /* ngx package loaded */
  &#160;&#160;&#160;lua_pop(L, 2);
-
+ &#160;&#160;&#160;...
  &#160;&#160;&#160;lua_setglobal(L, &quot;ngx&quot;) -->
 <g id="node11" class="node">
 <title>lua_getglobal(L, "package"); /* ngx package */
@@ -573,89 +481,44 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
  &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /* ngx package loaded ngx */
  &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, "ngx"); /* ngx package loaded */
  &nbsp;&nbsp;&nbsp;lua_pop(L, 2);
-
+ &nbsp;&nbsp;&nbsp;...
  &nbsp;&nbsp;&nbsp;lua_setglobal(L, "ngx")</title>
-<ellipse fill="none" stroke="#000000" cx="254.495" cy="-161.2469" rx="237.8719" ry="88.4945"></ellipse>
-<text text-anchor="middle" x="254.495" y="-207.0469" font-family="Times,serif" font-size="14.00" fill="#000000">lua_getglobal(L, "package"); /* ngx package */</text>
-<text text-anchor="middle" x="254.495" y="-190.2469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_getfield(L, -1, "loaded"); /* ngx package loaded */</text>
-<text text-anchor="middle" x="254.495" y="-173.4469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /* ngx package loaded ngx */</text>
-<text text-anchor="middle" x="254.495" y="-156.6469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, "ngx"); /* ngx package loaded */</text>
-<text text-anchor="middle" x="254.495" y="-139.8469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_pop(L, 2);</text>
-<text text-anchor="middle" x="254.495" y="-107.0469" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_setglobal(L, "ngx")</text>
+<ellipse fill="none" stroke="#000000" cx="254.495" cy="-161.8126" rx="237.8719" ry="88.6256"></ellipse>
+<text text-anchor="middle" x="254.495" y="-208.0126" font-family="Times,serif" font-size="14.00" fill="#000000">lua_getglobal(L, "package"); /* ngx package */</text>
+<text text-anchor="middle" x="254.495" y="-191.2126" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_getfield(L, -1, "loaded"); /* ngx package loaded */</text>
+<text text-anchor="middle" x="254.495" y="-174.4126" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /* ngx package loaded ngx */</text>
+<text text-anchor="middle" x="254.495" y="-157.6126" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, "ngx"); /* ngx package loaded */</text>
+<text text-anchor="middle" x="254.495" y="-140.8126" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_pop(L, 2);</text>
+<text text-anchor="middle" x="254.495" y="-124.0126" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;...</text>
+<text text-anchor="middle" x="254.495" y="-107.2126" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;lua_setglobal(L, "ngx")</text>
 </g>
 <!-- ngx_http_lua_inject_http_consts(L);
  &#160;&#160;&#160;ngx_http_lua_inject_core_consts(L);
-
- &#160;&#160;&#160;ngx_http_lua_inject_log_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_output_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_time_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_string_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_control_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_subrequest_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_sleep_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &#160;&#160;&#160;ngx_http_lua_inject_regex_api(L);
-#endif
-
+ &#160;&#160;&#160;...
  &#160;&#160;&#160;ngx_http_lua_inject_req_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_resp_header_api(L);
- &#160;&#160;&#160;ngx_http_lua_create_headers_metatable(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_variable_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_shdict_api(lmcf, L);
- &#160;&#160;&#160;ngx_http_lua_inject_socket_tcp_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_socket_udp_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_uthread_api(log, L);
- &#160;&#160;&#160;ngx_http_lua_inject_timer_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_config_api(L);
- &#160;&#160;&#160;ngx_http_lua_inject_worker_api(L);
-
+ &#160;&#160;&#160;...
  &#160;&#160;&#160;ngx_http_lua_inject_misc_api(L);&#45;&gt;lua_getglobal(L, &quot;package&quot;); /* ngx package */
  &#160;&#160;&#160;lua_getfield(L, &#45;1, &quot;loaded&quot;); /* ngx package loaded */
  &#160;&#160;&#160;lua_pushvalue(L, &#45;3); /* ngx package loaded ngx */
  &#160;&#160;&#160;lua_setfield(L, &#45;2, &quot;ngx&quot;); /* ngx package loaded */
  &#160;&#160;&#160;lua_pop(L, 2);
-
+ &#160;&#160;&#160;...
  &#160;&#160;&#160;lua_setglobal(L, &quot;ngx&quot;) -->
 <g id="edge11" class="edge">
 <title>ngx_http_lua_inject_http_consts(L);
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_core_consts(L);
-
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_log_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_output_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_time_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_string_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_control_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_subrequest_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_sleep_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_phase_api(L);
-
-#if (NGX_PCRE)
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_regex_api(L);
-#endif
-
+ &nbsp;&nbsp;&nbsp;...
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_req_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_resp_header_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_create_headers_metatable(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_variable_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_shdict_api(lmcf, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_tcp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_socket_udp_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_uthread_api(log, L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_timer_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_config_api(L);
- &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_worker_api(L);
-
+ &nbsp;&nbsp;&nbsp;...
  &nbsp;&nbsp;&nbsp;ngx_http_lua_inject_misc_api(L);-&gt;lua_getglobal(L, "package"); /* ngx package */
  &nbsp;&nbsp;&nbsp;lua_getfield(L, -1, "loaded"); /* ngx package loaded */
  &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /* ngx package loaded ngx */
  &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, "ngx"); /* ngx package loaded */
  &nbsp;&nbsp;&nbsp;lua_pop(L, 2);
-
+ &nbsp;&nbsp;&nbsp;...
  &nbsp;&nbsp;&nbsp;lua_setglobal(L, "ngx")</title>
-<path fill="none" stroke="#000000" d="M254.495,-286.4885C254.495,-277.271 254.495,-268.3456 254.495,-259.7905"></path>
-<polygon fill="#000000" stroke="#000000" points="257.9951,-259.5442 254.495,-249.5442 250.9951,-259.5442 257.9951,-259.5442"></polygon>
+<path fill="none" stroke="#000000" d="M254.495,-287.6198C254.495,-278.911 254.495,-269.9463 254.495,-261.0043"></path>
+<polygon fill="#000000" stroke="#000000" points="257.9951,-260.9329 254.495,-250.9329 250.9951,-260.933 257.9951,-260.9329"></polygon>
 </g>
 <!-- ngx_http_lua_inject_coroutine_api(log, L) -->
 <g id="node12" class="node">
@@ -668,7 +531,7 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
  &#160;&#160;&#160;lua_pushvalue(L, &#45;3); /* ngx package loaded ngx */
  &#160;&#160;&#160;lua_setfield(L, &#45;2, &quot;ngx&quot;); /* ngx package loaded */
  &#160;&#160;&#160;lua_pop(L, 2);
-
+ &#160;&#160;&#160;...
  &#160;&#160;&#160;lua_setglobal(L, &quot;ngx&quot;)&#45;&gt;ngx_http_lua_inject_coroutine_api(log, L) -->
 <g id="edge12" class="edge">
 <title>lua_getglobal(L, "package"); /* ngx package */
@@ -676,22 +539,20 @@ lua和C是通过无处不在的 virtual stack实现的。无论是C向Lua传递�
  &nbsp;&nbsp;&nbsp;lua_pushvalue(L, -3); /* ngx package loaded ngx */
  &nbsp;&nbsp;&nbsp;lua_setfield(L, -2, "ngx"); /* ngx package loaded */
  &nbsp;&nbsp;&nbsp;lua_pop(L, 2);
-
+ &nbsp;&nbsp;&nbsp;...
  &nbsp;&nbsp;&nbsp;lua_setglobal(L, "ngx")-&gt;ngx_http_lua_inject_coroutine_api(log, L)</title>
-<path fill="none" stroke="#000000" d="M332.2465,-77.5051C343.7293,-65.1376 354.7512,-53.2665 363.8885,-43.4253"></path>
-<polygon fill="#000000" stroke="#000000" points="366.5459,-45.7071 370.7852,-35.9973 361.4161,-40.9442 366.5459,-45.7071"></polygon>
+<path fill="none" stroke="#000000" d="M332.2465,-77.7401C343.7293,-65.3237 354.7512,-53.4058 363.8885,-43.5257"></path>
+<polygon fill="#000000" stroke="#000000" points="366.565,-45.7864 370.7852,-36.0683 361.4258,-41.0336 366.565,-45.7864"></polygon>
 </g>
 <!-- ngx_http_lua_inject_coroutine_api(log, L)&#45;&gt;ngx_http_lua_inject_ngx_api(L, lmcf, log) -->
 <g id="edge13" class="edge">
 <title>ngx_http_lua_inject_coroutine_api(log, L)-&gt;ngx_http_lua_inject_ngx_api(L, lmcf, log)</title>
-<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M447.4653,-35.015C467.335,-43.4389 487.8385,-55.6442 501.495,-73 526.304,-104.5293 520.495,-121.1273 520.495,-161.2469 520.495,-1272.0869 520.495,-1272.0869 520.495,-1272.0869 520.495,-1296.3008 502.0977,-1312.8233 480.0198,-1323.9334"></path>
-<polygon fill="#000000" stroke="#000000" points="478.3366,-1320.8554 470.7232,-1328.2233 481.2696,-1327.2113 478.3366,-1320.8554"></polygon>
-<text text-anchor="middle" x="532.9403" y="-1077.4869" font-family="Times,serif" font-size="14.00" fill="#000000">void</text>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M447.4779,-35.0051C467.3489,-43.428 487.8499,-55.6352 501.495,-73 526.4353,-104.7388 520.495,-121.4472 520.495,-161.8126 520.495,-731.2917 520.495,-731.2917 520.495,-731.2917 520.495,-755.5056 502.0977,-772.0281 480.0198,-783.1382"></path>
+<polygon fill="#000000" stroke="#000000" points="478.3366,-780.0601 470.7232,-787.4281 481.2696,-786.4161 478.3366,-780.0601"></polygon>
+<text text-anchor="middle" x="532.9403" y="-536.6917" font-family="Times,serif" font-size="14.00" fill="#000000">void</text>
 </g>
 </g>
 </svg>
-
-
 
 
 ### access_by_lua指令的执行流程
@@ -958,8 +819,8 @@ access_by_lua指令由ngx_http_lua_access_handler_inline函数实现。主要流
 </g>
 </svg>
 
-### <span id = "ngx_http_lua_init"> ngx_http_lua_init流程 </span>
-### <span id = "ngx.say"> ngx_lua如何实现ngx.say和ngx.sleep </span>
+
+### <span id = "ngx_say"> ngx_lua如何实现ngx.say和ngx.sleep </span>
 先看一段示例配置：
 ```    server {
         listen    80;
@@ -1036,6 +897,90 @@ ngx.say 由ngx_http_lua_inject_output_api通过lua_pushcfunction注册，由gx_h
 </g>
 </g>
 </svg>
+
+<span id=kong > #KONG(API GW)的实现</span>
+## KONG的参考配置
+```
+# Comments begin with the letters #! for special comment, do not delete it.
+
+upstream kong_upstream {
+    server 0.0.0.1;
+    balancer_by_lua_block {
+       kong.balancer()
+    }
+    keepalive 19;
+}
+
+server {
+
+    listen 80;
+    listen 443 ssl;
+    server_name apigw.qq.com;
+    ssl_certificate /usr/local/l7/l7_nginx/cert/default.pem;
+    ssl_certificate_key /usr/local/l7/l7_nginx/cert/default.key;
+
+    ssl_certificate_by_lua_block {
+        kong.ssl_certificate()
+    }
+
+    location / {
+
+        set $upstream_host               '';
+        set $upstream_upgrade            '';
+        set $upstream_connection         '';
+        set $upstream_scheme             '';
+        set $upstream_uri                '';
+        set $upstream_x_forwarded_for    '';
+        set $upstream_x_forwarded_proto  '';
+        set $upstream_x_forwarded_host   '';
+        set $upstream_x_forwarded_port   '';
+
+        access_by_lua_block {
+           kong.access()
+        }
+
+        header_filter_by_lua_block {
+           kong.header_filter()
+        }
+
+        body_filter_by_lua_block {
+            kong.body_filter()
+        }
+
+        log_by_lua_block {
+           kong.log()
+        }
+
+        proxy_http_version 1.1;
+        proxy_set_header   Host               $upstream_host;
+        proxy_set_header   X-Real-IP          $remote_addr;
+        proxy_pass_header  Server;
+        proxy_pass         $upstream_scheme://kong_upstream$upstream_uri;
+    }
+}
+```
+### kong的启动
+kong安装完后，bin/目录下有一个kon的lua执行脚本。
+```
+#!/usr/bin/env resty
+
+require "luarocks.loader"
+
+package.path = "./?.lua;./?/init.lua;" .. package.path
+
+require("kong.cmd.init")(arg)
+
+```
+执行./bin/kong start，会调用 kong/cmd/init.lua,该脚本会接着调用
+kong/cmd/start.lua。  
+start.lua接着调用kong/cmd/utils/nginx_signals.lua。
+这个脚本会寻找openresty路径，并启动nginx。
+```
+cmd = fmt("%s -p %s -c %s", nginx_bin, kong_conf.prefix, "nginx.conf")
+```
+### kong如何实现路由
+
+
 
 # <span id = ngx_lua_drawback> ngx lua的局限<span>
 ## 1. 功能局限：  
