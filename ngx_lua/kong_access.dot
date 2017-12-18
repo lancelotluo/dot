@@ -1,0 +1,35 @@
+digraph {
+    "kong.access"->
+    "core.access.before(ctx)
+    定义在kong/core/handler.lua"[style=dashed];
+    "core.access.before(ctx)
+    定义在kong/core/handler.lua"->
+    "for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+        plugin.handler:access(plugin_conf)
+    遍历执行各个插件";
+    "for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+        plugin.handler:access(plugin_conf)
+    遍历执行各个插件" -> "core.access.after(ctx)";
+
+subgraph cluster_access_before {
+    "core.access.before(ctx)
+    定义在kong/core/handler.lua"
+    ->"build_router(singletons.dao, version)"[style=dashed];
+    "build_router(singletons.dao, version)"->"local match_t = router.exec(ngx)";
+    "local match_t = router.exec(ngx)"->"local match_t = find_api(method, uri, req_host, ngx)"[style=dashed];
+    "local match_t = find_api(method, uri, req_host, ngx)"->"local match_t = router.exec(ngx)"[label="return match_t"];
+}
+
+subgraph cluster_find_api {
+    "if match_t"[shape=diamond];
+    "local match_t = find_api(method, uri, req_host, ngx)"->"local cache_key = fmt(\"%s:%s:%s\", req_method, req_uri, req_host)"[style=dashed];
+    "local cache_key = fmt(\"%s:%s:%s\", req_method, req_uri, req_host)"->"local match_t = cache:get(cache_key)";
+    "local match_t = cache:get(cache_key)"->"if match_t";
+    "if match_t"->"local match_t = find_api(method, uri, req_host, ngx)"[label="return match_t"];
+}
+
+subgraph cluster_access_after {
+    "core.access.after(ctx)"->"balancer.execute(ctx.balancer_address)"[style=dashed];
+    "balancer.execute(ctx.balancer_address)"->"hi";
+}
+}
