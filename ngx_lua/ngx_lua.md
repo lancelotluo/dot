@@ -979,7 +979,243 @@ start.lua接着调用kong/cmd/utils/nginx_signals.lua。
 cmd = fmt("%s -p %s -c %s", nginx_bin, kong_conf.prefix, "nginx.conf")
 ```
 ### kong如何实现路由
+说一下核心的逻辑。
+路由查找都是放在内存中实现lrucache。key是request的方法，URL 和HOST。
+```
+local cache_key = fmt("%s:%s:%s", req_method, req_uri, req_host)
+do  
+   local match_t = cache:get(cache_key)
+   if match_t then
+     return match_t
+   end
+ end
+ ```
 
+如果没有查找到，会更新相应的cache。
+```
+local match_t    = {
+  api            = matched_api.api,
+  upstream_url_t = upstream_url_t,
+  upstream_uri   = upstream_uri,
+  upstream_host  = upstream_host,
+  matches        = {
+    uri_captures = matches.uri_captures,
+    uri          = matches.uri,
+    host         = matches.host,
+    method       = matches.method,
+  }
+}
+
+cache:set(cache_key, match_t)
+
+```
+代码逻辑如下：
+<!DOCTYPE svg [<!ENTITY nbsp "&#160;">]><svg width="1841pt" height="913pt" viewBox="0 0 1841 913" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 908.8214)">
+<title>%0</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-908.8214 1837,-908.8214 1837,4 -4,4"></polygon>
+<g id="clust1" class="cluster">
+<title>cluster_access_before</title>
+<polygon fill="none" stroke="#000000" points="286,-318.8 286,-839.8214 730,-839.8214 730,-318.8 286,-318.8"></polygon>
+</g>
+<g id="clust2" class="cluster">
+<title>cluster_find_api</title>
+<polygon fill="none" stroke="#000000" points="8,-8 8,-297.8 570,-297.8 570,-8 8,-8"></polygon>
+</g>
+<g id="clust3" class="cluster">
+<title>cluster_access_after</title>
+<polygon fill="none" stroke="#000000" points="889,-318.8 889,-608.6 1825,-608.6 1825,-318.8 889,-318.8"></polygon>
+</g>
+<!-- kong.access -->
+<g id="node1" class="node">
+<title>kong.access</title>
+<ellipse fill="#00ff00" stroke="#000000" cx="996" cy="-886.8214" rx="57.3455" ry="18"></ellipse>
+<text text-anchor="middle" x="996" y="-882.6214" font-family="Times,serif" font-size="14.00" fill="#000000">kong.access</text>
+</g>
+<!-- core.access.before(ctx)
+ &#160;&#160;&#160;定义在kong/core/handler.lua -->
+<g id="node2" class="node">
+<title>core.access.before(ctx)
+ &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua</title>
+<ellipse fill="none" stroke="#000000" cx="585" cy="-802.4057" rx="137.4992" ry="29.3315"></ellipse>
+<text text-anchor="middle" x="585" y="-806.6057" font-family="Times,serif" font-size="14.00" fill="#000000">core.access.before(ctx)</text>
+<text text-anchor="middle" x="585" y="-789.8057" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua</text>
+</g>
+<!-- kong.access&#45;&gt;core.access.before(ctx)
+ &#160;&#160;&#160;定义在kong/core/handler.lua -->
+<g id="edge1" class="edge">
+<title>kong.access-&gt;core.access.before(ctx)
+ &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M947.6445,-876.8896C885.7586,-864.1788 776.7099,-841.7812 694.3079,-824.8566"></path>
+<polygon fill="#000000" stroke="#000000" points="694.8956,-821.4043 684.3959,-822.8207 693.4872,-828.2611 694.8956,-821.4043"></polygon>
+</g>
+<!-- for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;plugin.handler:access(plugin_conf)
+ &#160;&#160;&#160;遍历执行各个插件 -->
+<g id="node3" class="node">
+<title>for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plugin.handler:access(plugin_conf)
+ &nbsp;&nbsp;&nbsp;遍历执行各个插件</title>
+<ellipse fill="none" stroke="#000000" cx="1059" cy="-678.895" rx="321.3438" ry="41.0911"></ellipse>
+<text text-anchor="middle" x="1059" y="-691.495" font-family="Times,serif" font-size="14.00" fill="#000000">for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do</text>
+<text text-anchor="middle" x="1059" y="-674.695" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plugin.handler:access(plugin_conf)</text>
+<text text-anchor="middle" x="1059" y="-657.895" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;遍历执行各个插件</text>
+</g>
+<!-- core.access.before(ctx)
+ &#160;&#160;&#160;定义在kong/core/handler.lua&#45;&gt;for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;plugin.handler:access(plugin_conf)
+ &#160;&#160;&#160;遍历执行各个插件 -->
+<g id="edge2" class="edge">
+<title>core.access.before(ctx)
+ &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua-&gt;for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plugin.handler:access(plugin_conf)
+ &nbsp;&nbsp;&nbsp;遍历执行各个插件</title>
+<path fill="none" stroke="#000000" d="M672.4913,-779.608C738.0341,-762.5295 829.3616,-738.7322 906.7847,-718.5579"></path>
+<polygon fill="#000000" stroke="#000000" points="907.8451,-721.8986 916.6394,-715.9901 906.08,-715.1248 907.8451,-721.8986"></polygon>
+</g>
+<!-- build_router(singletons.dao, version) -->
+<g id="node5" class="node">
+<title>build_router(singletons.dao, version)</title>
+<ellipse fill="none" stroke="#000000" cx="554" cy="-582.6" rx="153.9591" ry="18"></ellipse>
+<text text-anchor="middle" x="554" y="-578.4" font-family="Times,serif" font-size="14.00" fill="#000000">build_router(singletons.dao, version)</text>
+</g>
+<!-- core.access.before(ctx)
+ &#160;&#160;&#160;定义在kong/core/handler.lua&#45;&gt;build_router(singletons.dao, version) -->
+<g id="edge5" class="edge">
+<title>core.access.before(ctx)
+ &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua-&gt;build_router(singletons.dao, version)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M580.8192,-772.7617C574.8139,-730.1812 563.8243,-652.2589 557.9498,-610.6064"></path>
+<polygon fill="#000000" stroke="#000000" points="561.401,-610.0139 556.5387,-600.6007 554.4696,-610.9916 561.401,-610.0139"></polygon>
+</g>
+<!-- core.access.after(ctx) -->
+<g id="node4" class="node">
+<title>core.access.after(ctx)</title>
+<ellipse fill="none" stroke="#000000" cx="1351" cy="-582.6" rx="93.1098" ry="18"></ellipse>
+<text text-anchor="middle" x="1351" y="-578.4" font-family="Times,serif" font-size="14.00" fill="#000000">core.access.after(ctx)</text>
+</g>
+<!-- for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;plugin.handler:access(plugin_conf)
+ &#160;&#160;&#160;遍历执行各个插件&#45;&gt;core.access.after(ctx) -->
+<g id="edge3" class="edge">
+<title>for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plugin.handler:access(plugin_conf)
+ &nbsp;&nbsp;&nbsp;遍历执行各个插件-&gt;core.access.after(ctx)</title>
+<path fill="none" stroke="#000000" d="M1176.0851,-640.283C1216.8088,-626.8533 1260.659,-612.3924 1294.2673,-601.3092"></path>
+<polygon fill="#000000" stroke="#000000" points="1295.507,-604.5858 1303.9078,-598.13 1293.3147,-597.938 1295.507,-604.5858"></polygon>
+</g>
+<!-- core.access.after(ctx)&#45;&gt;kong.access -->
+<g id="edge4" class="edge">
+<title>core.access.after(ctx)-&gt;kong.access</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1367.4729,-600.4304C1375.666,-610.5278 1384.7154,-623.8611 1389,-637.6 1399.9282,-672.6422 1409.266,-689.585 1389,-720.1901 1315.7449,-830.8178 1152.7318,-868.2085 1061.3387,-880.6917"></path>
+<polygon fill="#000000" stroke="#000000" points="1060.8336,-877.2279 1051.3709,-881.9931 1061.7399,-884.169 1060.8336,-877.2279"></polygon>
+<text text-anchor="middle" x="1389.7132" y="-742.3901" font-family="Times,serif" font-size="14.00" fill="#000000">return</text>
+</g>
+<!-- balancer.execute(ctx.balancer_address) -->
+<g id="node11" class="node">
+<title>balancer.execute(ctx.balancer_address)</title>
+<ellipse fill="none" stroke="#000000" cx="1219" cy="-471.6" rx="162.5409" ry="18"></ellipse>
+<text text-anchor="middle" x="1219" y="-467.4" font-family="Times,serif" font-size="14.00" fill="#000000">balancer.execute(ctx.balancer_address)</text>
+</g>
+<!-- core.access.after(ctx)&#45;&gt;balancer.execute(ctx.balancer_address) -->
+<g id="edge13" class="edge">
+<title>core.access.after(ctx)-&gt;balancer.execute(ctx.balancer_address)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1330.0842,-565.0117C1307.9125,-546.3673 1272.738,-516.7888 1247.9195,-495.9187"></path>
+<polygon fill="#000000" stroke="#000000" points="1250.1613,-493.2308 1240.255,-489.4736 1245.6561,-498.5884 1250.1613,-493.2308"></polygon>
+</g>
+<!-- local match_t = router.exec(ngx) -->
+<g id="node6" class="node">
+<title>local match_t = router.exec(ngx)</title>
+<ellipse fill="none" stroke="#000000" cx="545" cy="-471.6" rx="137.8575" ry="18"></ellipse>
+<text text-anchor="middle" x="545" y="-467.4" font-family="Times,serif" font-size="14.00" fill="#000000">local match_t = router.exec(ngx)</text>
+</g>
+<!-- build_router(singletons.dao, version)&#45;&gt;local match_t = router.exec(ngx) -->
+<g id="edge6" class="edge">
+<title>build_router(singletons.dao, version)-&gt;local match_t = router.exec(ngx)</title>
+<path fill="none" stroke="#000000" d="M552.5138,-564.2706C551.1003,-546.8373 548.9526,-520.3482 547.3148,-500.1489"></path>
+<polygon fill="#000000" stroke="#000000" points="550.7852,-499.641 546.4884,-489.9566 543.8081,-500.2068 550.7852,-499.641"></polygon>
+</g>
+<!-- local match_t = find_api(method, uri, req_host, ngx) -->
+<g id="node7" class="node">
+<title>local match_t = find_api(method, uri, req_host, ngx)</title>
+<ellipse fill="none" stroke="#000000" cx="508" cy="-344.8" rx="214.2732" ry="18"></ellipse>
+<text text-anchor="middle" x="508" y="-340.6" font-family="Times,serif" font-size="14.00" fill="#000000">local match_t = find_api(method, uri, req_host, ngx)</text>
+</g>
+<!-- local match_t = router.exec(ngx)&#45;&gt;local match_t = find_api(method, uri, req_host, ngx) -->
+<g id="edge7" class="edge">
+<title>local match_t = router.exec(ngx)-&gt;local match_t = find_api(method, uri, req_host, ngx)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M536.8537,-453.5514C532.3049,-442.9518 526.8049,-429.2018 523,-416.6 518.7305,-402.4596 515.2506,-386.3929 512.7212,-373.0485"></path>
+<polygon fill="#000000" stroke="#000000" points="516.1304,-372.2325 510.8996,-363.0189 509.243,-373.4835 516.1304,-372.2325"></polygon>
+</g>
+<!-- local match_t = find_api(method, uri, req_host, ngx)&#45;&gt;local match_t = router.exec(ngx) -->
+<g id="edge8" class="edge">
+<title>local match_t = find_api(method, uri, req_host, ngx)-&gt;local match_t = router.exec(ngx)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M514.2819,-363.0575C516.1788,-368.7245 518.2272,-375.004 520,-380.8 526.3964,-401.7124 532.9332,-425.5583 537.7177,-443.564"></path>
+<polygon fill="#000000" stroke="#000000" points="534.3836,-444.6473 540.3179,-453.4242 541.1522,-442.8623 534.3836,-444.6473"></polygon>
+<text text-anchor="middle" x="572.0137" y="-404" font-family="Times,serif" font-size="14.00" fill="#000000">return match_t</text>
+</g>
+<!-- local cache_key = fmt(&quot;%s:%s:%s&quot;, req_method, req_uri, req_host) -->
+<g id="node9" class="node">
+<title>local cache_key = fmt("%s:%s:%s", req_method, req_uri, req_host)</title>
+<ellipse fill="none" stroke="#000000" cx="289" cy="-271.8" rx="273.4511" ry="18"></ellipse>
+<text text-anchor="middle" x="289" y="-267.6" font-family="Times,serif" font-size="14.00" fill="#000000">local cache_key = fmt("%s:%s:%s", req_method, req_uri, req_host)</text>
+</g>
+<!-- local match_t = find_api(method, uri, req_host, ngx)&#45;&gt;local cache_key = fmt(&quot;%s:%s:%s&quot;, req_method, req_uri, req_host) -->
+<g id="edge9" class="edge">
+<title>local match_t = find_api(method, uri, req_host, ngx)-&gt;local cache_key = fmt("%s:%s:%s", req_method, req_uri, req_host)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M455.544,-327.3147C424.3323,-316.9108 384.5417,-303.6472 351.6814,-292.6938"></path>
+<polygon fill="#000000" stroke="#000000" points="352.7614,-289.3645 342.1677,-289.5226 350.5477,-296.0053 352.7614,-289.3645"></polygon>
+</g>
+<!-- if match_t -->
+<g id="node8" class="node">
+<title>if match_t</title>
+<polygon fill="none" stroke="#000000" points="462,-52 390.78,-34 462,-16 533.22,-34 462,-52"></polygon>
+<text text-anchor="middle" x="462" y="-29.8" font-family="Times,serif" font-size="14.00" fill="#000000">if match_t</text>
+</g>
+<!-- if match_t&#45;&gt;local match_t = find_api(method, uri, req_host, ngx) -->
+<g id="edge12" class="edge">
+<title>if match_t-&gt;local match_t = find_api(method, uri, req_host, ngx)</title>
+<path fill="none" stroke="#000000" d="M499.367,-42.567C537.1479,-52.3426 590,-69.578 590,-89.5 590,-271.8 590,-271.8 590,-271.8 590,-292.9299 574.6227,-309.4489 557.1863,-321.3881"></path>
+<polygon fill="#000000" stroke="#000000" points="555.0921,-318.5716 548.5195,-326.8814 558.8396,-324.484 555.0921,-318.5716"></polygon>
+<text text-anchor="middle" x="631.0137" y="-185.2" font-family="Times,serif" font-size="14.00" fill="#000000">return match_t</text>
+</g>
+<!-- local match_t = cache:get(cache_key) -->
+<g id="node10" class="node">
+<title>local match_t = cache:get(cache_key)</title>
+<ellipse fill="none" stroke="#000000" cx="376" cy="-145" rx="157.4779" ry="18"></ellipse>
+<text text-anchor="middle" x="376" y="-140.8" font-family="Times,serif" font-size="14.00" fill="#000000">local match_t = cache:get(cache_key)</text>
+</g>
+<!-- local cache_key = fmt(&quot;%s:%s:%s&quot;, req_method, req_uri, req_host)&#45;&gt;local match_t = cache:get(cache_key) -->
+<g id="edge10" class="edge">
+<title>local cache_key = fmt("%s:%s:%s", req_method, req_uri, req_host)-&gt;local match_t = cache:get(cache_key)</title>
+<path fill="none" stroke="#000000" d="M301.465,-253.6327C316.1947,-232.1644 340.8308,-196.2582 357.7193,-171.6436"></path>
+<polygon fill="#000000" stroke="#000000" points="360.7866,-173.3596 363.5581,-163.1336 355.0145,-169.3992 360.7866,-173.3596"></polygon>
+</g>
+<!-- local match_t = cache:get(cache_key)&#45;&gt;if match_t -->
+<g id="edge11" class="edge">
+<title>local match_t = cache:get(cache_key)-&gt;if match_t</title>
+<path fill="none" stroke="#000000" d="M390.2012,-126.6706C404.9608,-107.6204 428.0983,-77.7568 444.1002,-57.1033"></path>
+<polygon fill="#000000" stroke="#000000" points="446.9094,-59.192 450.2673,-49.1434 441.3759,-54.9048 446.9094,-59.192"></polygon>
+</g>
+<!-- balancer完成了后端RS &#160;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回 -->
+<g id="node12" class="node">
+<title>balancer完成了后端RS &nbsp;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回</title>
+<ellipse fill="none" stroke="#000000" cx="1357" cy="-344.8" rx="460.256" ry="18"></ellipse>
+<text text-anchor="middle" x="1357" y="-340.6" font-family="Times,serif" font-size="14.00" fill="#000000">balancer完成了后端RS &nbsp;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回</text>
+</g>
+<!-- balancer.execute(ctx.balancer_address)&#45;&gt;balancer完成了后端RS &#160;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回 -->
+<g id="edge14" class="edge">
+<title>balancer.execute(ctx.balancer_address)-&gt;balancer完成了后端RS &nbsp;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回</title>
+<path fill="none" stroke="#000000" d="M1238.4793,-453.7016C1262.2821,-431.8307 1302.7022,-394.691 1329.6239,-369.9542"></path>
+<polygon fill="#000000" stroke="#000000" points="1332.1774,-372.3612 1337.1729,-363.0179 1327.4412,-367.2067 1332.1774,-372.3612"></polygon>
+</g>
+<!-- balancer完成了后端RS &#160;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回&#45;&gt;core.access.after(ctx) -->
+<g id="edge15" class="edge">
+<title>balancer完成了后端RS &nbsp;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回-&gt;core.access.after(ctx)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1378.2267,-362.8321C1389.4783,-374.4584 1401,-390.6487 1401,-408.2 1401,-527.1 1401,-527.1 1401,-527.1 1401,-539.1571 1394.4058,-549.7764 1386.0068,-558.4122"></path>
+<polygon fill="#000000" stroke="#000000" points="1383.6282,-555.8447 1378.6324,-565.1878 1388.3642,-560.9993 1383.6282,-555.8447"></polygon>
+</g>
+</g>
+</svg>
 
 
 # <span id = ngx_lua_drawback> ngx lua的局限<span>

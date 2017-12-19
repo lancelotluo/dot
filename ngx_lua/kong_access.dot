@@ -1,4 +1,5 @@
 digraph {
+    "kong.access"[style=filled, fillcolor=green];
     "kong.access"->
     "core.access.before(ctx)
     定义在kong/core/handler.lua"[style=dashed];
@@ -10,6 +11,7 @@ digraph {
     "for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
         plugin.handler:access(plugin_conf)
     遍历执行各个插件" -> "core.access.after(ctx)";
+    "core.access.after(ctx)"->"kong.access"[style=dashed, label=return];
 
 subgraph cluster_access_before {
     "core.access.before(ctx)
@@ -17,7 +19,7 @@ subgraph cluster_access_before {
     ->"build_router(singletons.dao, version)"[style=dashed];
     "build_router(singletons.dao, version)"->"local match_t = router.exec(ngx)";
     "local match_t = router.exec(ngx)"->"local match_t = find_api(method, uri, req_host, ngx)"[style=dashed];
-    "local match_t = find_api(method, uri, req_host, ngx)"->"local match_t = router.exec(ngx)"[label="return match_t"];
+    "local match_t = find_api(method, uri, req_host, ngx)"->"local match_t = router.exec(ngx)"[style=dashed,label="return match_t"];
 }
 
 subgraph cluster_find_api {
@@ -30,6 +32,9 @@ subgraph cluster_find_api {
 
 subgraph cluster_access_after {
     "core.access.after(ctx)"->"balancer.execute(ctx.balancer_address)"[style=dashed];
-    "balancer.execute(ctx.balancer_address)"->"hi";
+    "balancer.execute(ctx.balancer_address)"->
+    "balancer完成了后端RS  IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回";
+    "balancer完成了后端RS  IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回"->
+    "core.access.after(ctx)"[style=dashed];
 }
 }
