@@ -3,29 +3,127 @@
   <head>
       <meta charset="utf-8" />
       <title>ngx_lua</title>
-      <style>.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(85, 85, 85); background-color: white; overflow: auto; }
+      <style>.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(171, 178, 191); background-color: rgb(40, 44, 52); overflow: auto; }
 .markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
-.markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(3, 3, 3); }
+.markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(255, 255, 255); }
 .markdown-preview:not([data-use-github-style]) h1 { font-size: 2.4em; font-weight: 300; }
 .markdown-preview:not([data-use-github-style]) h2 { font-size: 1.8em; font-weight: 400; }
 .markdown-preview:not([data-use-github-style]) h3 { font-size: 1.5em; font-weight: 500; }
 .markdown-preview:not([data-use-github-style]) h4 { font-size: 1.2em; font-weight: 600; }
 .markdown-preview:not([data-use-github-style]) h5 { font-size: 1.1em; font-weight: 600; }
 .markdown-preview:not([data-use-github-style]) h6 { font-size: 1em; font-weight: 600; }
-.markdown-preview:not([data-use-github-style]) strong { color: rgb(3, 3, 3); }
-.markdown-preview:not([data-use-github-style]) del { color: rgb(126, 126, 126); }
-.markdown-preview:not([data-use-github-style]) a, .markdown-preview:not([data-use-github-style]) a code { color: black; }
+.markdown-preview:not([data-use-github-style]) strong { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) del { color: rgb(124, 135, 156); }
+.markdown-preview:not([data-use-github-style]) a, .markdown-preview:not([data-use-github-style]) a code { color: rgb(82, 139, 255); }
 .markdown-preview:not([data-use-github-style]) img { max-width: 100%; }
 .markdown-preview:not([data-use-github-style]) > p { margin-top: 0px; margin-bottom: 1.5em; }
 .markdown-preview:not([data-use-github-style]) > ul, .markdown-preview:not([data-use-github-style]) > ol { margin-bottom: 1.5em; }
-.markdown-preview:not([data-use-github-style]) blockquote { margin: 1.5em 0px; font-size: inherit; color: rgb(126, 126, 126); border-color: rgb(214, 214, 214); border-width: 4px; }
-.markdown-preview:not([data-use-github-style]) hr { margin: 3em 0px; border-top: 2px dashed rgb(214, 214, 214); background: none; }
+.markdown-preview:not([data-use-github-style]) blockquote { margin: 1.5em 0px; font-size: inherit; color: rgb(124, 135, 156); border-color: rgb(75, 83, 98); border-width: 4px; }
+.markdown-preview:not([data-use-github-style]) hr { margin: 3em 0px; border-top: 2px dashed rgb(75, 83, 98); background: none; }
 .markdown-preview:not([data-use-github-style]) table { margin: 1.5em 0px; }
-.markdown-preview:not([data-use-github-style]) th { color: rgb(3, 3, 3); }
-.markdown-preview:not([data-use-github-style]) th, .markdown-preview:not([data-use-github-style]) td { padding: 0.66em 1em; border: 1px solid rgb(214, 214, 214); }
-.markdown-preview:not([data-use-github-style]) pre, .markdown-preview:not([data-use-github-style]) code { color: rgb(3, 3, 3); background-color: rgb(240, 240, 240); }
-.markdown-preview:not([data-use-github-style]) pre, .markdown-preview:not([data-use-github-style]) pre.editor-colors { margin: 1.5em 0px; padding: 1em; font-size: 0.92em; border-radius: 3px; background-color: rgb(245, 245, 245); }
-.markdown-preview:not([data-use-github-style]) kbd { color: rgb(3, 3, 3); border-width: 1px 1px 2px; border-style: solid; border-color: rgb(214, 214, 214) rgb(214, 214, 214) rgb(199, 199, 199); border-image: initial; background-color: rgb(240, 240, 240); }
+.markdown-preview:not([data-use-github-style]) th { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) th, .markdown-preview:not([data-use-github-style]) td { padding: 0.66em 1em; border: 1px solid rgb(75, 83, 98); }
+.markdown-preview:not([data-use-github-style]) code { color: rgb(255, 255, 255); background-color: rgb(58, 63, 75); }
+.markdown-preview:not([data-use-github-style]) pre.editor-colors { margin: 1.5em 0px; padding: 1em; font-size: 0.92em; border-radius: 3px; background-color: rgb(49, 54, 63); }
+.markdown-preview:not([data-use-github-style]) kbd { color: rgb(255, 255, 255); border-width: 1px 1px 2px; border-style: solid; border-color: rgb(75, 83, 98) rgb(75, 83, 98) rgb(62, 68, 81); border-image: initial; background-color: rgb(58, 63, 75); }
+.markdown-preview[data-use-github-style] { font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif; line-height: 1.6; word-wrap: break-word; padding: 30px; font-size: 16px; color: rgb(51, 51, 51); background-color: rgb(255, 255, 255); overflow: scroll; }
+.markdown-preview[data-use-github-style] > :first-child { margin-top: 0px !important; }
+.markdown-preview[data-use-github-style] > :last-child { margin-bottom: 0px !important; }
+.markdown-preview[data-use-github-style] a:not([href]) { color: inherit; text-decoration: none; }
+.markdown-preview[data-use-github-style] .absent { color: rgb(204, 0, 0); }
+.markdown-preview[data-use-github-style] .anchor { position: absolute; top: 0px; left: 0px; display: block; padding-right: 6px; padding-left: 30px; margin-left: -30px; }
+.markdown-preview[data-use-github-style] .anchor:focus { outline: none; }
+.markdown-preview[data-use-github-style] h1, .markdown-preview[data-use-github-style] h2, .markdown-preview[data-use-github-style] h3, .markdown-preview[data-use-github-style] h4, .markdown-preview[data-use-github-style] h5, .markdown-preview[data-use-github-style] h6 { position: relative; margin-top: 1em; margin-bottom: 16px; font-weight: bold; line-height: 1.4; }
+.markdown-preview[data-use-github-style] h1 .octicon-link, .markdown-preview[data-use-github-style] h2 .octicon-link, .markdown-preview[data-use-github-style] h3 .octicon-link, .markdown-preview[data-use-github-style] h4 .octicon-link, .markdown-preview[data-use-github-style] h5 .octicon-link, .markdown-preview[data-use-github-style] h6 .octicon-link { display: none; color: rgb(0, 0, 0); vertical-align: middle; }
+.markdown-preview[data-use-github-style] h1:hover .anchor, .markdown-preview[data-use-github-style] h2:hover .anchor, .markdown-preview[data-use-github-style] h3:hover .anchor, .markdown-preview[data-use-github-style] h4:hover .anchor, .markdown-preview[data-use-github-style] h5:hover .anchor, .markdown-preview[data-use-github-style] h6:hover .anchor { padding-left: 8px; margin-left: -30px; text-decoration: none; }
+.markdown-preview[data-use-github-style] h1:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h2:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h3:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h4:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h5:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h6:hover .anchor .octicon-link { display: inline-block; }
+.markdown-preview[data-use-github-style] h1 tt, .markdown-preview[data-use-github-style] h2 tt, .markdown-preview[data-use-github-style] h3 tt, .markdown-preview[data-use-github-style] h4 tt, .markdown-preview[data-use-github-style] h5 tt, .markdown-preview[data-use-github-style] h6 tt, .markdown-preview[data-use-github-style] h1 code, .markdown-preview[data-use-github-style] h2 code, .markdown-preview[data-use-github-style] h3 code, .markdown-preview[data-use-github-style] h4 code, .markdown-preview[data-use-github-style] h5 code, .markdown-preview[data-use-github-style] h6 code { font-size: inherit; }
+.markdown-preview[data-use-github-style] h1 { padding-bottom: 0.3em; font-size: 2.25em; line-height: 1.2; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h1 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h2 { padding-bottom: 0.3em; font-size: 1.75em; line-height: 1.225; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h2 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h3 { font-size: 1.5em; line-height: 1.43; }
+.markdown-preview[data-use-github-style] h3 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h4 { font-size: 1.25em; }
+.markdown-preview[data-use-github-style] h4 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h5 { font-size: 1em; }
+.markdown-preview[data-use-github-style] h5 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] h6 { font-size: 1em; color: rgb(119, 119, 119); }
+.markdown-preview[data-use-github-style] h6 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] p, .markdown-preview[data-use-github-style] blockquote, .markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol, .markdown-preview[data-use-github-style] dl, .markdown-preview[data-use-github-style] table, .markdown-preview[data-use-github-style] pre { margin-top: 0px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] hr { height: 4px; padding: 0px; margin: 16px 0px; background-color: rgb(231, 231, 231); border: 0px none; }
+.markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol { padding-left: 2em; }
+.markdown-preview[data-use-github-style] ul.no-list, .markdown-preview[data-use-github-style] ol.no-list { padding: 0px; list-style-type: none; }
+.markdown-preview[data-use-github-style] ul ul, .markdown-preview[data-use-github-style] ul ol, .markdown-preview[data-use-github-style] ol ol, .markdown-preview[data-use-github-style] ol ul { margin-top: 0px; margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] li > p { margin-top: 16px; }
+.markdown-preview[data-use-github-style] dl { padding: 0px; }
+.markdown-preview[data-use-github-style] dl dt { padding: 0px; margin-top: 16px; font-size: 1em; font-style: italic; font-weight: bold; }
+.markdown-preview[data-use-github-style] dl dd { padding: 0px 16px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] blockquote { padding: 0px 15px; color: rgb(119, 119, 119); border-left: 4px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] blockquote > :first-child { margin-top: 0px; }
+.markdown-preview[data-use-github-style] blockquote > :last-child { margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] table { display: block; width: 100%; overflow: auto; word-break: keep-all; }
+.markdown-preview[data-use-github-style] table th { font-weight: bold; }
+.markdown-preview[data-use-github-style] table th, .markdown-preview[data-use-github-style] table td { padding: 6px 13px; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] table tr { background-color: rgb(255, 255, 255); border-top: 1px solid rgb(204, 204, 204); }
+.markdown-preview[data-use-github-style] table tr:nth-child(2n) { background-color: rgb(248, 248, 248); }
+.markdown-preview[data-use-github-style] img { max-width: 100%; box-sizing: border-box; }
+.markdown-preview[data-use-github-style] .emoji { max-width: none; }
+.markdown-preview[data-use-github-style] span.frame { display: block; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.frame > span { display: block; float: left; width: auto; padding: 7px; margin: 13px 0px 0px; overflow: hidden; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] span.frame span img { display: block; float: left; }
+.markdown-preview[data-use-github-style] span.frame span span { display: block; padding: 5px 0px 0px; clear: both; color: rgb(51, 51, 51); }
+.markdown-preview[data-use-github-style] span.align-center { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-center > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-center span img { margin: 0px auto; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-right { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-right > span { display: block; margin: 13px 0px 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] span.align-right span img { margin: 0px; text-align: right; }
+.markdown-preview[data-use-github-style] span.float-left { display: block; float: left; margin-right: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-left span { margin: 13px 0px 0px; }
+.markdown-preview[data-use-github-style] span.float-right { display: block; float: right; margin-left: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-right > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] code, .markdown-preview[data-use-github-style] tt { padding: 0.2em 0px; margin: 0px; font-size: 85%; background-color: rgba(0, 0, 0, 0.0392157); border-radius: 3px; }
+.markdown-preview[data-use-github-style] code::before, .markdown-preview[data-use-github-style] tt::before, .markdown-preview[data-use-github-style] code::after, .markdown-preview[data-use-github-style] tt::after { letter-spacing: -0.2em; content: " "; }
+.markdown-preview[data-use-github-style] code br, .markdown-preview[data-use-github-style] tt br { display: none; }
+.markdown-preview[data-use-github-style] del code { text-decoration: inherit; }
+.markdown-preview[data-use-github-style] pre > code { padding: 0px; margin: 0px; font-size: 100%; word-break: normal; white-space: pre; background: transparent; border: 0px; }
+.markdown-preview[data-use-github-style] .highlight { margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] .highlight pre, .markdown-preview[data-use-github-style] pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; background-color: rgb(247, 247, 247); border-radius: 3px; }
+.markdown-preview[data-use-github-style] .highlight pre { margin-bottom: 0px; word-break: normal; }
+.markdown-preview[data-use-github-style] pre { word-wrap: normal; }
+.markdown-preview[data-use-github-style] pre code, .markdown-preview[data-use-github-style] pre tt { display: inline; max-width: initial; padding: 0px; margin: 0px; overflow: initial; line-height: inherit; word-wrap: normal; background-color: transparent; border: 0px; }
+.markdown-preview[data-use-github-style] pre code::before, .markdown-preview[data-use-github-style] pre tt::before, .markdown-preview[data-use-github-style] pre code::after, .markdown-preview[data-use-github-style] pre tt::after { content: normal; }
+.markdown-preview[data-use-github-style] kbd { display: inline-block; padding: 3px 5px; font-size: 11px; line-height: 10px; color: rgb(85, 85, 85); vertical-align: middle; background-color: rgb(252, 252, 252); border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204) rgb(204, 204, 204) rgb(187, 187, 187); border-image: initial; border-radius: 3px; box-shadow: rgb(187, 187, 187) 0px -1px 0px inset; }
+.markdown-preview[data-use-github-style] a { color: rgb(51, 122, 183); }
+.markdown-preview[data-use-github-style] code { color: inherit; }
+.markdown-preview[data-use-github-style] pre.editor-colors { padding: 0.8em 1em; margin-bottom: 1em; font-size: 0.85em; border-radius: 4px; overflow: auto; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors .horizontal-scrollbar { visibility: hidden; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors:hover .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors:hover .horizontal-scrollbar { visibility: visible; }
+.markdown-preview .task-list-item-checkbox { position: absolute; margin: 0.25em 0px 0px -1.4em; }
+.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(171, 178, 191); background-color: rgb(40, 44, 52); overflow: auto; }
+.markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
+.markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) h1 { font-size: 2.4em; font-weight: 300; }
+.markdown-preview:not([data-use-github-style]) h2 { font-size: 1.8em; font-weight: 400; }
+.markdown-preview:not([data-use-github-style]) h3 { font-size: 1.5em; font-weight: 500; }
+.markdown-preview:not([data-use-github-style]) h4 { font-size: 1.2em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h5 { font-size: 1.1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h6 { font-size: 1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) strong { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) del { color: rgb(124, 135, 156); }
+.markdown-preview:not([data-use-github-style]) a, .markdown-preview:not([data-use-github-style]) a code { color: rgb(82, 139, 255); }
+.markdown-preview:not([data-use-github-style]) img { max-width: 100%; }
+.markdown-preview:not([data-use-github-style]) > p { margin-top: 0px; margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) > ul, .markdown-preview:not([data-use-github-style]) > ol { margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) blockquote { margin: 1.5em 0px; font-size: inherit; color: rgb(124, 135, 156); border-color: rgb(75, 83, 98); border-width: 4px; }
+.markdown-preview:not([data-use-github-style]) hr { margin: 3em 0px; border-top: 2px dashed rgb(75, 83, 98); background: none; }
+.markdown-preview:not([data-use-github-style]) table { margin: 1.5em 0px; }
+.markdown-preview:not([data-use-github-style]) th { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) th, .markdown-preview:not([data-use-github-style]) td { padding: 0.66em 1em; border: 1px solid rgb(75, 83, 98); }
+.markdown-preview:not([data-use-github-style]) pre, .markdown-preview:not([data-use-github-style]) code { color: rgb(255, 255, 255); background-color: rgb(58, 63, 75); }
+.markdown-preview:not([data-use-github-style]) pre, .markdown-preview:not([data-use-github-style]) pre.editor-colors { margin: 1.5em 0px; padding: 1em; font-size: 0.92em; border-radius: 3px; background-color: rgb(49, 54, 63); }
+.markdown-preview:not([data-use-github-style]) kbd { color: rgb(255, 255, 255); border-width: 1px 1px 2px; border-style: solid; border-color: rgb(75, 83, 98) rgb(75, 83, 98) rgb(62, 68, 81); border-image: initial; background-color: rgb(58, 63, 75); }
 .markdown-preview[data-use-github-style] { font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif; line-height: 1.6; word-wrap: break-word; padding: 30px; font-size: 16px; color: rgb(51, 51, 51); background-color: rgb(255, 255, 255); overflow: scroll; }
 .markdown-preview[data-use-github-style] > :first-child { margin-top: 0px !important; }
 .markdown-preview[data-use-github-style] > :last-child { margin-bottom: 0px !important; }
@@ -120,181 +218,412 @@
 }
 
 pre.editor-colors {
-  background-color: white;
-  color: #555;
+  background-color: #282c34;
+  color: #abb2bf;
+}
+pre.editor-colors .line.cursor-line {
+  background-color: rgba(153, 187, 255, 0.04);
+}
+pre.editor-colors .invisible {
+  color: #abb2bf;
+}
+pre.editor-colors .cursor {
+  border-left: 2px solid #528bff;
+}
+pre.editor-colors .selection .region {
+  background-color: #3e4451;
+}
+pre.editor-colors .bracket-matcher .region {
+  border-bottom: 1px solid #528bff;
+  box-sizing: border-box;
 }
 pre.editor-colors .invisible-character {
-  color: rgba(85, 85, 85, 0.2);
+  color: rgba(171, 178, 191, 0.15);
 }
 pre.editor-colors .indent-guide {
-  color: rgba(85, 85, 85, 0.2);
+  color: rgba(171, 178, 191, 0.15);
 }
 pre.editor-colors .wrap-guide {
-  background-color: rgba(85, 85, 85, 0.2);
+  background-color: rgba(171, 178, 191, 0.15);
 }
-pre.editor-colors .gutter {
-  color: #555;
-  background: white;
+pre.editor-colors .find-result .region.region.region,
+pre.editor-colors .current-result .region.region.region {
+  border-radius: 2px;
+  background-color: rgba(82, 139, 255, 0.24);
+  transition: border-color 0.4s;
+}
+pre.editor-colors .find-result .region.region.region {
+  border: 2px solid transparent;
+}
+pre.editor-colors .current-result .region.region.region {
+  border: 2px solid #528bff;
+  transition-duration: .1s;
+}
+pre.editor-colors .gutter .line-number {
+  color: #636d83;
+  -webkit-font-smoothing: antialiased;
+}
+pre.editor-colors .gutter .line-number.cursor-line {
+  color: #abb2bf;
+  background-color: #2c313a;
+}
+pre.editor-colors .gutter .line-number.cursor-line-no-selection {
+  background-color: transparent;
+}
+pre.editor-colors .gutter .line-number .icon-right {
+  color: #abb2bf;
+}
+pre.editor-colors .gutter:not(.git-diff-icon) .line-number.git-line-removed.git-line-removed::before {
+  bottom: -3px;
+}
+pre.editor-colors .gutter:not(.git-diff-icon) .line-number.git-line-removed::after {
+  content: "";
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
+  width: 25px;
+  border-bottom: 1px dotted rgba(224, 82, 82, 0.5);
+  pointer-events: none;
 }
 pre.editor-colors .gutter .line-number.folded,
 pre.editor-colors .gutter .line-number:after,
 pre.editor-colors .fold-marker:after {
-  color: #e87b00;
-}
-pre.editor-colors .invisible {
-  color: #555;
-}
-pre.editor-colors .selection .region {
-  background-color: #e1e1e1;
-}
-pre.editor-colors .bracket-matcher .region {
-  background-color: #C9C9C9;
-  opacity: .7;
-  border-bottom: 0 none;
-}
-pre.editor-colors.is-focused .cursor {
-  border-color: black;
-}
-pre.editor-colors.is-focused .selection .region {
-  background-color: #afc4da;
-}
-pre.editor-colors.is-focused .line-number.cursor-line-no-selection,
-pre.editor-colors.is-focused .line.cursor-line {
-  background-color: rgba(255, 255, 134, 0.34);
-}
-pre.editor-colors .syntax--source.syntax--gfm {
-  color: #444;
-}
-pre.editor-colors .syntax--gfm .syntax--markup.syntax--heading {
-  color: #111;
-}
-pre.editor-colors .syntax--gfm .syntax--link {
-  color: #888;
-}
-pre.editor-colors .syntax--gfm .syntax--variable.syntax--list {
-  color: #888;
-}
-pre.editor-colors .syntax--markdown .syntax--paragraph {
-  color: #444;
-}
-pre.editor-colors .syntax--markdown .syntax--heading {
-  color: #111;
-}
-pre.editor-colors .syntax--markdown .syntax--link {
-  color: #888;
-}
-pre.editor-colors .syntax--markdown .syntax--link .syntax--string {
-  color: #888;
+  color: #abb2bf;
 }
 .syntax--comment {
-  color: #999988;
+  color: #5c6370;
   font-style: italic;
 }
-.syntax--string {
-  color: #D14;
+.syntax--comment .syntax--markup.syntax--link {
+  color: #5c6370;
 }
-.syntax--string .syntax--source,
-.syntax--string .syntax--meta.syntax--embedded.syntax--line {
-  color: #5A5A5A;
-}
-.syntax--string .syntax--punctuation.syntax--section.syntax--embedded {
-  color: #920B2D;
-}
-.syntax--string .syntax--punctuation.syntax--section.syntax--embedded .syntax--source {
-  color: #920B2D;
-}
-.syntax--constant.syntax--numeric {
-  color: #D14;
-}
-.syntax--constant.syntax--language {
-  color: #606aa1;
-}
-.syntax--constant.syntax--character,
-.syntax--constant.syntax--other {
-  color: #606aa1;
-}
-.syntax--constant.syntax--symbol {
-  color: #990073;
-}
-.syntax--constant.syntax--numeric.syntax--line-number.syntax--find-in-files .syntax--match {
-  color: rgba(143, 190, 0, 0.63);
-}
-.syntax--variable {
-  color: #008080;
-}
-.syntax--variable.syntax--parameter {
-  color: #606aa1;
-}
-.syntax--keyword {
-  color: #222;
-  font-weight: bold;
-}
-.syntax--keyword.syntax--unit {
-  color: #445588;
-}
-.syntax--keyword.syntax--special-method {
-  color: #0086B3;
-}
-.syntax--storage {
-  color: #222;
-}
-.syntax--storage.syntax--type {
-  color: #222;
-}
-.syntax--entity.syntax--name.syntax--class {
-  text-decoration: underline;
-  color: #606aa1;
+.syntax--entity.syntax--name.syntax--type {
+  color: #e5c07b;
 }
 .syntax--entity.syntax--other.syntax--inherited-class {
-  text-decoration: underline;
-  color: #606aa1;
+  color: #98c379;
 }
-.syntax--entity.syntax--name.syntax--function {
-  color: #900;
+.syntax--keyword {
+  color: #c678dd;
 }
-.syntax--entity.syntax--name.syntax--tag {
-  color: #008080;
+.syntax--keyword.syntax--control {
+  color: #c678dd;
 }
-.syntax--entity.syntax--other.syntax--attribute-name {
-  color: #458;
+.syntax--keyword.syntax--operator {
+  color: #abb2bf;
+}
+.syntax--keyword.syntax--other.syntax--special-method {
+  color: #61afef;
+}
+.syntax--keyword.syntax--other.syntax--unit {
+  color: #d19a66;
+}
+.syntax--storage {
+  color: #c678dd;
+}
+.syntax--storage.syntax--type.syntax--annotation,
+.syntax--storage.syntax--type.syntax--primitive {
+  color: #c678dd;
+}
+.syntax--storage.syntax--modifier.syntax--package,
+.syntax--storage.syntax--modifier.syntax--import {
+  color: #abb2bf;
+}
+.syntax--constant {
+  color: #d19a66;
+}
+.syntax--constant.syntax--variable {
+  color: #d19a66;
+}
+.syntax--constant.syntax--character.syntax--escape {
+  color: #56b6c2;
+}
+.syntax--constant.syntax--numeric {
+  color: #d19a66;
+}
+.syntax--constant.syntax--other.syntax--color {
+  color: #56b6c2;
+}
+.syntax--constant.syntax--other.syntax--symbol {
+  color: #56b6c2;
+}
+.syntax--variable {
+  color: #e06c75;
+}
+.syntax--variable.syntax--interpolation {
+  color: #be5046;
+}
+.syntax--variable.syntax--parameter {
+  color: #abb2bf;
+}
+.syntax--string {
+  color: #98c379;
+}
+.syntax--string.syntax--regexp {
+  color: #56b6c2;
+}
+.syntax--string.syntax--regexp .syntax--source.syntax--ruby.syntax--embedded {
+  color: #e5c07b;
+}
+.syntax--string.syntax--other.syntax--link {
+  color: #e06c75;
+}
+.syntax--punctuation.syntax--definition.syntax--comment {
+  color: #5c6370;
+}
+.syntax--punctuation.syntax--definition.syntax--method-parameters,
+.syntax--punctuation.syntax--definition.syntax--function-parameters,
+.syntax--punctuation.syntax--definition.syntax--parameters,
+.syntax--punctuation.syntax--definition.syntax--separator,
+.syntax--punctuation.syntax--definition.syntax--seperator,
+.syntax--punctuation.syntax--definition.syntax--array {
+  color: #abb2bf;
+}
+.syntax--punctuation.syntax--definition.syntax--heading,
+.syntax--punctuation.syntax--definition.syntax--identity {
+  color: #61afef;
+}
+.syntax--punctuation.syntax--definition.syntax--bold {
+  color: #e5c07b;
   font-weight: bold;
 }
-.syntax--entity.syntax--name.syntax--filename.syntax--find-in-files {
-  color: #E6DB74;
+.syntax--punctuation.syntax--definition.syntax--italic {
+  color: #c678dd;
+  font-style: italic;
 }
-.syntax--support.syntax--constant,
-.syntax--support.syntax--function,
-.syntax--support.syntax--type {
-  color: #458;
+.syntax--punctuation.syntax--section.syntax--embedded {
+  color: #be5046;
+}
+.syntax--punctuation.syntax--section.syntax--method,
+.syntax--punctuation.syntax--section.syntax--class,
+.syntax--punctuation.syntax--section.syntax--inner-class {
+  color: #abb2bf;
 }
 .syntax--support.syntax--class {
-  color: #008080;
+  color: #e5c07b;
 }
-.syntax--invalid {
-  color: #F8F8F0;
-  background-color: #00A8C6;
+.syntax--support.syntax--type {
+  color: #56b6c2;
+}
+.syntax--support.syntax--function {
+  color: #56b6c2;
+}
+.syntax--support.syntax--function.syntax--any-method {
+  color: #61afef;
+}
+.syntax--entity.syntax--name.syntax--function {
+  color: #61afef;
+}
+.syntax--entity.syntax--name.syntax--class,
+.syntax--entity.syntax--name.syntax--type.syntax--class {
+  color: #e5c07b;
+}
+.syntax--entity.syntax--name.syntax--section {
+  color: #61afef;
+}
+.syntax--entity.syntax--name.syntax--tag {
+  color: #e06c75;
+}
+.syntax--entity.syntax--other.syntax--attribute-name {
+  color: #d19a66;
+}
+.syntax--entity.syntax--other.syntax--attribute-name.syntax--id {
+  color: #61afef;
+}
+.syntax--meta.syntax--class {
+  color: #e5c07b;
+}
+.syntax--meta.syntax--class.syntax--body {
+  color: #abb2bf;
+}
+.syntax--meta.syntax--method-call,
+.syntax--meta.syntax--method {
+  color: #abb2bf;
+}
+.syntax--meta.syntax--definition.syntax--variable {
+  color: #e06c75;
+}
+.syntax--meta.syntax--link {
+  color: #d19a66;
+}
+.syntax--meta.syntax--require {
+  color: #61afef;
+}
+.syntax--meta.syntax--selector {
+  color: #c678dd;
+}
+.syntax--meta.syntax--separator {
+  background-color: #373b41;
+  color: #abb2bf;
+}
+.syntax--meta.syntax--tag {
+  color: #abb2bf;
+}
+.syntax--underline {
+  text-decoration: underline;
+}
+.syntax--none {
+  color: #abb2bf;
 }
 .syntax--invalid.syntax--deprecated {
-  color: #F8F8F0;
-  background-color: #8FBE00;
+  color: #523d14 !important;
+  background-color: #e0c285 !important;
 }
-.syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--double.syntax--json,
-.syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--double.syntax--json .syntax--punctuation.syntax--string {
-  color: #000080;
+.syntax--invalid.syntax--illegal {
+  color: white !important;
+  background-color: #e05252 !important;
 }
-.syntax--meta.syntax--structure.syntax--dictionary.syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--double.syntax--json {
-  color: #d14;
-}
-.syntax--meta.syntax--diff,
-.syntax--meta.syntax--diff.syntax--header {
-  color: #75715E;
-}
-.syntax--css.syntax--support.syntax--property-name {
+.syntax--markup.syntax--bold {
+  color: #d19a66;
   font-weight: bold;
-  color: #333;
 }
-.syntax--css.syntax--constant {
-  color: #099;
+.syntax--markup.syntax--changed {
+  color: #c678dd;
+}
+.syntax--markup.syntax--deleted {
+  color: #e06c75;
+}
+.syntax--markup.syntax--italic {
+  color: #c678dd;
+  font-style: italic;
+}
+.syntax--markup.syntax--heading {
+  color: #e06c75;
+}
+.syntax--markup.syntax--heading .syntax--punctuation.syntax--definition.syntax--heading {
+  color: #61afef;
+}
+.syntax--markup.syntax--link {
+  color: #56b6c2;
+}
+.syntax--markup.syntax--inserted {
+  color: #98c379;
+}
+.syntax--markup.syntax--quote {
+  color: #d19a66;
+}
+.syntax--markup.syntax--raw {
+  color: #98c379;
+}
+.syntax--source.syntax--c .syntax--keyword.syntax--operator {
+  color: #c678dd;
+}
+.syntax--source.syntax--cpp .syntax--keyword.syntax--operator {
+  color: #c678dd;
+}
+.syntax--source.syntax--cs .syntax--keyword.syntax--operator {
+  color: #c678dd;
+}
+.syntax--source.syntax--css .syntax--property-name,
+.syntax--source.syntax--css .syntax--property-value {
+  color: #828997;
+}
+.syntax--source.syntax--css .syntax--property-name.syntax--support,
+.syntax--source.syntax--css .syntax--property-value.syntax--support {
+  color: #abb2bf;
+}
+.syntax--source.syntax--elixir .syntax--source.syntax--embedded.syntax--source {
+  color: #abb2bf;
+}
+.syntax--source.syntax--elixir .syntax--constant.syntax--language,
+.syntax--source.syntax--elixir .syntax--constant.syntax--numeric,
+.syntax--source.syntax--elixir .syntax--constant.syntax--definition {
+  color: #61afef;
+}
+.syntax--source.syntax--elixir .syntax--variable.syntax--definition,
+.syntax--source.syntax--elixir .syntax--variable.syntax--anonymous {
+  color: #c678dd;
+}
+.syntax--source.syntax--elixir .syntax--quoted {
+  color: #98c379;
+}
+.syntax--source.syntax--elixir .syntax--keyword.syntax--special-method,
+.syntax--source.syntax--elixir .syntax--embedded.syntax--section,
+.syntax--source.syntax--elixir .syntax--embedded.syntax--source.syntax--empty {
+  color: #e06c75;
+}
+.syntax--source.syntax--elixir .syntax--readwrite.syntax--module .syntax--punctuation {
+  color: #e06c75;
+}
+.syntax--source.syntax--elixir .syntax--regexp.syntax--section,
+.syntax--source.syntax--elixir .syntax--regexp.syntax--string {
+  color: #be5046;
+}
+.syntax--source.syntax--elixir .syntax--separator,
+.syntax--source.syntax--elixir .syntax--keyword.syntax--operator {
+  color: #d19a66;
+}
+.syntax--source.syntax--elixir .syntax--variable.syntax--constant {
+  color: #e5c07b;
+}
+.syntax--source.syntax--elixir .syntax--array,
+.syntax--source.syntax--elixir .syntax--scope,
+.syntax--source.syntax--elixir .syntax--section {
+  color: #828997;
+}
+.syntax--source.syntax--gfm .syntax--markup {
+  -webkit-font-smoothing: auto;
+}
+.syntax--source.syntax--gfm .syntax--link .syntax--entity {
+  color: #61afef;
+}
+.syntax--source.syntax--go .syntax--storage.syntax--type.syntax--string {
+  color: #c678dd;
+}
+.syntax--source.syntax--ini .syntax--keyword.syntax--other.syntax--definition.syntax--ini {
+  color: #e06c75;
+}
+.syntax--source.syntax--java .syntax--storage.syntax--modifier.syntax--import {
+  color: #e5c07b;
+}
+.syntax--source.syntax--java .syntax--storage.syntax--type {
+  color: #e5c07b;
+}
+.syntax--source.syntax--java .syntax--keyword.syntax--operator.syntax--instanceof {
+  color: #c678dd;
+}
+.syntax--source.syntax--java-properties .syntax--meta.syntax--key-pair {
+  color: #e06c75;
+}
+.syntax--source.syntax--java-properties .syntax--meta.syntax--key-pair > .syntax--punctuation {
+  color: #abb2bf;
+}
+.syntax--source.syntax--js .syntax--keyword.syntax--operator {
+  color: #56b6c2;
+}
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--delete,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--in,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--of,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--instanceof,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--new,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--typeof,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--void {
+  color: #c678dd;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--json {
+  color: #e06c75;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--json > .syntax--punctuation.syntax--string {
+  color: #e06c75;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--array.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json > .syntax--punctuation,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--array.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json > .syntax--punctuation {
+  color: #98c379;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--constant.syntax--language.syntax--json,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--array.syntax--json > .syntax--constant.syntax--language.syntax--json {
+  color: #56b6c2;
+}
+.syntax--source.syntax--ruby .syntax--constant.syntax--other.syntax--symbol > .syntax--punctuation {
+  color: inherit;
+}
+.syntax--source.syntax--python .syntax--keyword.syntax--operator.syntax--logical.syntax--python {
+  color: #c678dd;
+}
+.syntax--source.syntax--python .syntax--variable.syntax--parameter {
+  color: #d19a66;
 }
 </style>
   </head>
@@ -304,6 +633,7 @@ pre.editor-colors .syntax--markdown .syntax--link .syntax--string {
 <li><a href="#luac">lua和C的交互</a></li>
 <li><a href="#lua_nginx">lua在Nginx中的执行</a></li>
 <li><a href="#ngx_say">ngx_lua如何实现ngx.say和ngx.sleep</a></li>
+<li><a href="#kong">KONG (API GW)的实现</a></li>
 <li><a href="#ngx_lua_drawback">ngx lua的局限</a></li>
 </ul>
 <h1><span id="luabasic"> lua基础 </span></h1>
@@ -316,7 +646,12 @@ luajit是一个即时编译器，相比lua标准解释器性能要好很多。�
 <li>使用了直接分发。</li>
 </ol>
 <p>mike pall本人的回答可以参考：
-<a href="http://article.gmane.org/gmane.comp.lang.lua.general/58908">http://article.gmane.org/gmane.comp.lang.lua.general/58908</a></p>
+<a href="http://article.gmane.org/gmane.comp.lang.lua.general/58908">http://article.gmane.org/gmane.comp.lang.lua.general/58908</a>
+从lua_pcall的实现看一下区别：</p>
+<h3>lua_pcall标准实现</h3>
+<pre class="editor-colors"><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div></pre>
+<h3>lua_pacll luaJIT实现</h3>
 <h2>lua线程和协程</h2>
 <p>lua 不支持真正的多线程，主要有<a href="https://www.quora.com/What-makes-LuaJIT-faster-than-Lua">如下原因</a>：</p>
 <ol>
@@ -1182,6 +1517,318 @@ Function luaL_openlibs opens all standard libraries</li>
 <title>rc = ngx_http_lua_send_chain_link(r, ctx, cl)内容发送-&gt;这个函数就是nginx发送内容的逻辑类似，会根据条件调用ngx_http_lua_send_special,ngx_http_lua_output_filter等发送响应</title>
 <path fill="none" stroke="#000000" d="M544.8599,-71.8314C544.8599,-64.131 544.8599,-54.9743 544.8599,-46.4166"></path>
 <polygon fill="#000000" stroke="#000000" points="548.36,-46.4132 544.8599,-36.4133 541.36,-46.4133 548.36,-46.4132"></polygon>
+</g>
+</g>
+</svg>
+<p><span id="kong"> #KONG(API GW)的实现</span></p>
+<h2>KONG的参考配置</h2>
+<pre class="editor-colors"><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>#&nbsp;Comments&nbsp;begin&nbsp;with&nbsp;the&nbsp;letters&nbsp;#!&nbsp;for&nbsp;special&nbsp;comment,&nbsp;do&nbsp;not&nbsp;delete&nbsp;it.</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>upstream&nbsp;kong_upstream&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;server&nbsp;0.0.0.1;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;balancer_by_lua_block&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kong.balancer()</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;keepalive&nbsp;19;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>server&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;listen&nbsp;80;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;listen&nbsp;443&nbsp;ssl;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;server_name&nbsp;apigw.qq.com;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;ssl_certificate&nbsp;/usr/local/l7/l7_nginx/cert/default.pem;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;ssl_certificate_key&nbsp;/usr/local/l7/l7_nginx/cert/default.key;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;ssl_certificate_by_lua_block&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kong.ssl_certificate()</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;location&nbsp;/&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;$upstream_host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'';</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;$upstream_upgrade&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'';</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;$upstream_connection&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'';</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;$upstream_scheme&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'';</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;$upstream_uri&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'';</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;$upstream_x_forwarded_for&nbsp;&nbsp;&nbsp;&nbsp;'';</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;$upstream_x_forwarded_proto&nbsp;&nbsp;'';</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;$upstream_x_forwarded_host&nbsp;&nbsp;&nbsp;'';</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;$upstream_x_forwarded_port&nbsp;&nbsp;&nbsp;'';</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_by_lua_block&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kong.access()</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;header_filter_by_lua_block&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kong.header_filter()</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body_filter_by_lua_block&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kong.body_filter()</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;log_by_lua_block&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kong.log()</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_http_version&nbsp;1.1;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header&nbsp;&nbsp;&nbsp;Host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$upstream_host;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header&nbsp;&nbsp;&nbsp;X-Real-IP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$remote_addr;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass_header&nbsp;&nbsp;Server;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$upstream_scheme://kong_upstream$upstream_uri;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>}</span></span>
+</div></pre>
+<h3>kong的启动</h3>
+<p>kong安装完后，bin/目录下有一个kon的lua执行脚本。</p>
+<pre class="editor-colors"><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>#!/usr/bin/env&nbsp;resty</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>require&nbsp;"luarocks.loader"</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>package.path&nbsp;=&nbsp;"./?.lua;./?/init.lua;"&nbsp;..&nbsp;package.path</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>require("kong.cmd.init")(arg)</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div></pre>
+<p>执行./bin/kong start，会调用 kong/cmd/init.lua,该脚本会接着调用
+kong/cmd/start.lua。<br>
+start.lua接着调用kong/cmd/utils/nginx_signals.lua。
+这个脚本会寻找openresty路径，并启动nginx。</p>
+<pre class="editor-colors"><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>cmd&nbsp;=&nbsp;fmt("%s&nbsp;-p&nbsp;%s&nbsp;-c&nbsp;%s",&nbsp;nginx_bin,&nbsp;kong_conf.prefix,&nbsp;"nginx.conf")</span></span>
+</div></pre>
+<h3>kong如何实现路由</h3>
+<p>说一下核心的逻辑。
+路由查找都是放在内存中实现lrucache。key是request的方法，URL 和HOST。</p>
+<pre class="editor-colors"><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>local&nbsp;cache_key&nbsp;=&nbsp;fmt("%s:%s:%s",&nbsp;req_method,&nbsp;req_uri,&nbsp;req_host)</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>do&nbsp;&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;local&nbsp;match_t&nbsp;=&nbsp;cache:get(cache_key)</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;if&nbsp;match_t&nbsp;then</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;match_t</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;end</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;end</span></span>
+</div></pre>
+<p>如果没有查找到，会更新相应的cache。</p>
+<pre class="editor-colors"><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>local&nbsp;match_t&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;api&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;matched_api.api,</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;upstream_url_t&nbsp;=&nbsp;upstream_url_t,</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;upstream_uri&nbsp;&nbsp;&nbsp;=&nbsp;upstream_uri,</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;upstream_host&nbsp;&nbsp;=&nbsp;upstream_host,</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;matches&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;{</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;uri_captures&nbsp;=&nbsp;matches.uri_captures,</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;uri&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;matches.uri,</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;matches.host,</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;&nbsp;&nbsp;method&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;matches.method,</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;&nbsp;}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>}</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>cache:set(cache_key,&nbsp;match_t)</span></span>
+</div><div class="line"><span class="syntax--text syntax--plain syntax--null-grammar"><span>&nbsp;</span></span>
+</div></pre>
+<p>代码逻辑如下：</p>
+]&gt;<svg width="1841pt" height="913pt" viewBox="0 0 1841 913" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 908.8214)">
+<title>%0</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-908.8214 1837,-908.8214 1837,4 -4,4"></polygon>
+<g id="clust1" class="cluster">
+<title>cluster_access_before</title>
+<polygon fill="none" stroke="#000000" points="286,-318.8 286,-839.8214 730,-839.8214 730,-318.8 286,-318.8"></polygon>
+</g>
+<g id="clust2" class="cluster">
+<title>cluster_find_api</title>
+<polygon fill="none" stroke="#000000" points="8,-8 8,-297.8 570,-297.8 570,-8 8,-8"></polygon>
+</g>
+<g id="clust3" class="cluster">
+<title>cluster_access_after</title>
+<polygon fill="none" stroke="#000000" points="889,-318.8 889,-608.6 1825,-608.6 1825,-318.8 889,-318.8"></polygon>
+</g>
+<!-- kong.access -->
+<g id="node1" class="node">
+<title>kong.access</title>
+<ellipse fill="#00ff00" stroke="#000000" cx="996" cy="-886.8214" rx="57.3455" ry="18"></ellipse>
+<text text-anchor="middle" x="996" y="-882.6214" font-family="Times,serif" font-size="14.00" fill="#000000">kong.access</text>
+</g>
+<!-- core.access.before(ctx)
+ &#160;&#160;&#160;定义在kong/core/handler.lua -->
+<g id="node2" class="node">
+<title>core.access.before(ctx)
+ &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua</title>
+<ellipse fill="none" stroke="#000000" cx="585" cy="-802.4057" rx="137.4992" ry="29.3315"></ellipse>
+<text text-anchor="middle" x="585" y="-806.6057" font-family="Times,serif" font-size="14.00" fill="#000000">core.access.before(ctx)</text>
+<text text-anchor="middle" x="585" y="-789.8057" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua</text>
+</g>
+<!-- kong.access&#45;&gt;core.access.before(ctx)
+ &#160;&#160;&#160;定义在kong/core/handler.lua -->
+<g id="edge1" class="edge">
+<title>kong.access-&gt;core.access.before(ctx)
+ &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M947.6445,-876.8896C885.7586,-864.1788 776.7099,-841.7812 694.3079,-824.8566"></path>
+<polygon fill="#000000" stroke="#000000" points="694.8956,-821.4043 684.3959,-822.8207 693.4872,-828.2611 694.8956,-821.4043"></polygon>
+</g>
+<!-- for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;plugin.handler:access(plugin_conf)
+ &#160;&#160;&#160;遍历执行各个插件 -->
+<g id="node3" class="node">
+<title>for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plugin.handler:access(plugin_conf)
+ &nbsp;&nbsp;&nbsp;遍历执行各个插件</title>
+<ellipse fill="none" stroke="#000000" cx="1059" cy="-678.895" rx="321.3438" ry="41.0911"></ellipse>
+<text text-anchor="middle" x="1059" y="-691.495" font-family="Times,serif" font-size="14.00" fill="#000000">for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do</text>
+<text text-anchor="middle" x="1059" y="-674.695" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plugin.handler:access(plugin_conf)</text>
+<text text-anchor="middle" x="1059" y="-657.895" font-family="Times,serif" font-size="14.00" fill="#000000"> &nbsp;&nbsp;&nbsp;遍历执行各个插件</text>
+</g>
+<!-- core.access.before(ctx)
+ &#160;&#160;&#160;定义在kong/core/handler.lua&#45;&gt;for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;plugin.handler:access(plugin_conf)
+ &#160;&#160;&#160;遍历执行各个插件 -->
+<g id="edge2" class="edge">
+<title>core.access.before(ctx)
+ &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua-&gt;for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plugin.handler:access(plugin_conf)
+ &nbsp;&nbsp;&nbsp;遍历执行各个插件</title>
+<path fill="none" stroke="#000000" d="M672.4913,-779.608C738.0341,-762.5295 829.3616,-738.7322 906.7847,-718.5579"></path>
+<polygon fill="#000000" stroke="#000000" points="907.8451,-721.8986 916.6394,-715.9901 906.08,-715.1248 907.8451,-721.8986"></polygon>
+</g>
+<!-- build_router(singletons.dao, version) -->
+<g id="node5" class="node">
+<title>build_router(singletons.dao, version)</title>
+<ellipse fill="none" stroke="#000000" cx="554" cy="-582.6" rx="153.9591" ry="18"></ellipse>
+<text text-anchor="middle" x="554" y="-578.4" font-family="Times,serif" font-size="14.00" fill="#000000">build_router(singletons.dao, version)</text>
+</g>
+<!-- core.access.before(ctx)
+ &#160;&#160;&#160;定义在kong/core/handler.lua&#45;&gt;build_router(singletons.dao, version) -->
+<g id="edge5" class="edge">
+<title>core.access.before(ctx)
+ &nbsp;&nbsp;&nbsp;定义在kong/core/handler.lua-&gt;build_router(singletons.dao, version)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M580.8192,-772.7617C574.8139,-730.1812 563.8243,-652.2589 557.9498,-610.6064"></path>
+<polygon fill="#000000" stroke="#000000" points="561.401,-610.0139 556.5387,-600.6007 554.4696,-610.9916 561.401,-610.0139"></polygon>
+</g>
+<!-- core.access.after(ctx) -->
+<g id="node4" class="node">
+<title>core.access.after(ctx)</title>
+<ellipse fill="none" stroke="#000000" cx="1351" cy="-582.6" rx="93.1098" ry="18"></ellipse>
+<text text-anchor="middle" x="1351" y="-578.4" font-family="Times,serif" font-size="14.00" fill="#000000">core.access.after(ctx)</text>
+</g>
+<!-- for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;plugin.handler:access(plugin_conf)
+ &#160;&#160;&#160;遍历执行各个插件&#45;&gt;core.access.after(ctx) -->
+<g id="edge3" class="edge">
+<title>for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plugin.handler:access(plugin_conf)
+ &nbsp;&nbsp;&nbsp;遍历执行各个插件-&gt;core.access.after(ctx)</title>
+<path fill="none" stroke="#000000" d="M1176.0851,-640.283C1216.8088,-626.8533 1260.659,-612.3924 1294.2673,-601.3092"></path>
+<polygon fill="#000000" stroke="#000000" points="1295.507,-604.5858 1303.9078,-598.13 1293.3147,-597.938 1295.507,-604.5858"></polygon>
+</g>
+<!-- core.access.after(ctx)&#45;&gt;kong.access -->
+<g id="edge4" class="edge">
+<title>core.access.after(ctx)-&gt;kong.access</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1367.4729,-600.4304C1375.666,-610.5278 1384.7154,-623.8611 1389,-637.6 1399.9282,-672.6422 1409.266,-689.585 1389,-720.1901 1315.7449,-830.8178 1152.7318,-868.2085 1061.3387,-880.6917"></path>
+<polygon fill="#000000" stroke="#000000" points="1060.8336,-877.2279 1051.3709,-881.9931 1061.7399,-884.169 1060.8336,-877.2279"></polygon>
+<text text-anchor="middle" x="1389.7132" y="-742.3901" font-family="Times,serif" font-size="14.00" fill="#000000">return</text>
+</g>
+<!-- balancer.execute(ctx.balancer_address) -->
+<g id="node11" class="node">
+<title>balancer.execute(ctx.balancer_address)</title>
+<ellipse fill="none" stroke="#000000" cx="1219" cy="-471.6" rx="162.5409" ry="18"></ellipse>
+<text text-anchor="middle" x="1219" y="-467.4" font-family="Times,serif" font-size="14.00" fill="#000000">balancer.execute(ctx.balancer_address)</text>
+</g>
+<!-- core.access.after(ctx)&#45;&gt;balancer.execute(ctx.balancer_address) -->
+<g id="edge13" class="edge">
+<title>core.access.after(ctx)-&gt;balancer.execute(ctx.balancer_address)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1330.0842,-565.0117C1307.9125,-546.3673 1272.738,-516.7888 1247.9195,-495.9187"></path>
+<polygon fill="#000000" stroke="#000000" points="1250.1613,-493.2308 1240.255,-489.4736 1245.6561,-498.5884 1250.1613,-493.2308"></polygon>
+</g>
+<!-- local match_t = router.exec(ngx) -->
+<g id="node6" class="node">
+<title>local match_t = router.exec(ngx)</title>
+<ellipse fill="none" stroke="#000000" cx="545" cy="-471.6" rx="137.8575" ry="18"></ellipse>
+<text text-anchor="middle" x="545" y="-467.4" font-family="Times,serif" font-size="14.00" fill="#000000">local match_t = router.exec(ngx)</text>
+</g>
+<!-- build_router(singletons.dao, version)&#45;&gt;local match_t = router.exec(ngx) -->
+<g id="edge6" class="edge">
+<title>build_router(singletons.dao, version)-&gt;local match_t = router.exec(ngx)</title>
+<path fill="none" stroke="#000000" d="M552.5138,-564.2706C551.1003,-546.8373 548.9526,-520.3482 547.3148,-500.1489"></path>
+<polygon fill="#000000" stroke="#000000" points="550.7852,-499.641 546.4884,-489.9566 543.8081,-500.2068 550.7852,-499.641"></polygon>
+</g>
+<!-- local match_t = find_api(method, uri, req_host, ngx) -->
+<g id="node7" class="node">
+<title>local match_t = find_api(method, uri, req_host, ngx)</title>
+<ellipse fill="none" stroke="#000000" cx="508" cy="-344.8" rx="214.2732" ry="18"></ellipse>
+<text text-anchor="middle" x="508" y="-340.6" font-family="Times,serif" font-size="14.00" fill="#000000">local match_t = find_api(method, uri, req_host, ngx)</text>
+</g>
+<!-- local match_t = router.exec(ngx)&#45;&gt;local match_t = find_api(method, uri, req_host, ngx) -->
+<g id="edge7" class="edge">
+<title>local match_t = router.exec(ngx)-&gt;local match_t = find_api(method, uri, req_host, ngx)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M536.8537,-453.5514C532.3049,-442.9518 526.8049,-429.2018 523,-416.6 518.7305,-402.4596 515.2506,-386.3929 512.7212,-373.0485"></path>
+<polygon fill="#000000" stroke="#000000" points="516.1304,-372.2325 510.8996,-363.0189 509.243,-373.4835 516.1304,-372.2325"></polygon>
+</g>
+<!-- local match_t = find_api(method, uri, req_host, ngx)&#45;&gt;local match_t = router.exec(ngx) -->
+<g id="edge8" class="edge">
+<title>local match_t = find_api(method, uri, req_host, ngx)-&gt;local match_t = router.exec(ngx)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M514.2819,-363.0575C516.1788,-368.7245 518.2272,-375.004 520,-380.8 526.3964,-401.7124 532.9332,-425.5583 537.7177,-443.564"></path>
+<polygon fill="#000000" stroke="#000000" points="534.3836,-444.6473 540.3179,-453.4242 541.1522,-442.8623 534.3836,-444.6473"></polygon>
+<text text-anchor="middle" x="572.0137" y="-404" font-family="Times,serif" font-size="14.00" fill="#000000">return match_t</text>
+</g>
+<!-- local cache_key = fmt(&quot;%s:%s:%s&quot;, req_method, req_uri, req_host) -->
+<g id="node9" class="node">
+<title>local cache_key = fmt("%s:%s:%s", req_method, req_uri, req_host)</title>
+<ellipse fill="none" stroke="#000000" cx="289" cy="-271.8" rx="273.4511" ry="18"></ellipse>
+<text text-anchor="middle" x="289" y="-267.6" font-family="Times,serif" font-size="14.00" fill="#000000">local cache_key = fmt("%s:%s:%s", req_method, req_uri, req_host)</text>
+</g>
+<!-- local match_t = find_api(method, uri, req_host, ngx)&#45;&gt;local cache_key = fmt(&quot;%s:%s:%s&quot;, req_method, req_uri, req_host) -->
+<g id="edge9" class="edge">
+<title>local match_t = find_api(method, uri, req_host, ngx)-&gt;local cache_key = fmt("%s:%s:%s", req_method, req_uri, req_host)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M455.544,-327.3147C424.3323,-316.9108 384.5417,-303.6472 351.6814,-292.6938"></path>
+<polygon fill="#000000" stroke="#000000" points="352.7614,-289.3645 342.1677,-289.5226 350.5477,-296.0053 352.7614,-289.3645"></polygon>
+</g>
+<!-- if match_t -->
+<g id="node8" class="node">
+<title>if match_t</title>
+<polygon fill="none" stroke="#000000" points="462,-52 390.78,-34 462,-16 533.22,-34 462,-52"></polygon>
+<text text-anchor="middle" x="462" y="-29.8" font-family="Times,serif" font-size="14.00" fill="#000000">if match_t</text>
+</g>
+<!-- if match_t&#45;&gt;local match_t = find_api(method, uri, req_host, ngx) -->
+<g id="edge12" class="edge">
+<title>if match_t-&gt;local match_t = find_api(method, uri, req_host, ngx)</title>
+<path fill="none" stroke="#000000" d="M499.367,-42.567C537.1479,-52.3426 590,-69.578 590,-89.5 590,-271.8 590,-271.8 590,-271.8 590,-292.9299 574.6227,-309.4489 557.1863,-321.3881"></path>
+<polygon fill="#000000" stroke="#000000" points="555.0921,-318.5716 548.5195,-326.8814 558.8396,-324.484 555.0921,-318.5716"></polygon>
+<text text-anchor="middle" x="631.0137" y="-185.2" font-family="Times,serif" font-size="14.00" fill="#000000">return match_t</text>
+</g>
+<!-- local match_t = cache:get(cache_key) -->
+<g id="node10" class="node">
+<title>local match_t = cache:get(cache_key)</title>
+<ellipse fill="none" stroke="#000000" cx="376" cy="-145" rx="157.4779" ry="18"></ellipse>
+<text text-anchor="middle" x="376" y="-140.8" font-family="Times,serif" font-size="14.00" fill="#000000">local match_t = cache:get(cache_key)</text>
+</g>
+<!-- local cache_key = fmt(&quot;%s:%s:%s&quot;, req_method, req_uri, req_host)&#45;&gt;local match_t = cache:get(cache_key) -->
+<g id="edge10" class="edge">
+<title>local cache_key = fmt("%s:%s:%s", req_method, req_uri, req_host)-&gt;local match_t = cache:get(cache_key)</title>
+<path fill="none" stroke="#000000" d="M301.465,-253.6327C316.1947,-232.1644 340.8308,-196.2582 357.7193,-171.6436"></path>
+<polygon fill="#000000" stroke="#000000" points="360.7866,-173.3596 363.5581,-163.1336 355.0145,-169.3992 360.7866,-173.3596"></polygon>
+</g>
+<!-- local match_t = cache:get(cache_key)&#45;&gt;if match_t -->
+<g id="edge11" class="edge">
+<title>local match_t = cache:get(cache_key)-&gt;if match_t</title>
+<path fill="none" stroke="#000000" d="M390.2012,-126.6706C404.9608,-107.6204 428.0983,-77.7568 444.1002,-57.1033"></path>
+<polygon fill="#000000" stroke="#000000" points="446.9094,-59.192 450.2673,-49.1434 441.3759,-54.9048 446.9094,-59.192"></polygon>
+</g>
+<!-- balancer完成了后端RS &#160;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回 -->
+<g id="node12" class="node">
+<title>balancer完成了后端RS &nbsp;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回</title>
+<ellipse fill="none" stroke="#000000" cx="1357" cy="-344.8" rx="460.256" ry="18"></ellipse>
+<text text-anchor="middle" x="1357" y="-340.6" font-family="Times,serif" font-size="14.00" fill="#000000">balancer完成了后端RS &nbsp;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回</text>
+</g>
+<!-- balancer.execute(ctx.balancer_address)&#45;&gt;balancer完成了后端RS &#160;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回 -->
+<g id="edge14" class="edge">
+<title>balancer.execute(ctx.balancer_address)-&gt;balancer完成了后端RS &nbsp;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回</title>
+<path fill="none" stroke="#000000" d="M1238.4793,-453.7016C1262.2821,-431.8307 1302.7022,-394.691 1329.6239,-369.9542"></path>
+<polygon fill="#000000" stroke="#000000" points="1332.1774,-372.3612 1337.1729,-363.0179 1327.4412,-367.2067 1332.1774,-372.3612"></polygon>
+</g>
+<!-- balancer完成了后端RS &#160;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回&#45;&gt;core.access.after(ctx) -->
+<g id="edge15" class="edge">
+<title>balancer完成了后端RS &nbsp;IP 的查找包括失败重试等逻辑，之后再完善一些后端信息，记录查找时间就返回-&gt;core.access.after(ctx)</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1378.2267,-362.8321C1389.4783,-374.4584 1401,-390.6487 1401,-408.2 1401,-527.1 1401,-527.1 1401,-527.1 1401,-539.1571 1394.4058,-549.7764 1386.0068,-558.4122"></path>
+<polygon fill="#000000" stroke="#000000" points="1383.6282,-555.8447 1378.6324,-565.1878 1388.3642,-560.9993 1383.6282,-555.8447"></polygon>
 </g>
 </g>
 </svg>
