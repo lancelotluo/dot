@@ -1,0 +1,28 @@
+digraph {
+    fontname = "Bitstream Vera Sans"
+    fontsize = 8 
+
+    node [
+            fontname = "Bitstream Vera Sans"
+            fontsize = 8 
+            shape = "record"
+    ]
+
+    edge [
+            fontname = "Bitstream Vera Sans"
+            fontsize = 8 
+    ]
+
+    QuicFramerVisitorInterface [
+            label = "{Animal|+ name : string\l+ age : int\l|+ die() : void\l}"
+    ]
+
+    "QuicBlockedWriterInterface"->"QuicConnection";
+    "QuicPacketGenerator::DelegateInterface"->"QuicConnection";
+    "QuicSentPacketManager::NetworkChangeVisitor"->"QuicConnection";
+    "QuicFramerVisitorInterface"->"QuicConnection";
+
+    "QuicConnectionVisitorInterface"->"QuicSession";
+    "StreamNotifierInterface"->"QuicSession";
+    "QuicStreamFrameDataProducer"->"QuicSession";
+}

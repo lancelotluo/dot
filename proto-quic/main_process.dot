@@ -1,0 +1,25 @@
+digraph process_packet {
+    "QuicDispatcher::ProcessPacket"->"framer_.ProcessPacket(packet)";
+
+    "framer_.ProcessPacket(packet)"->"visitor_->OnPacket()"[style=dashed];
+    "visitor_->OnPacket()"->"rocessPublicHeader(&reader, &header)";
+    "rocessPublicHeader(&reader, &header)"->"visitor_->OnUnauthenticatedPublicHeader(header)";
+    "visitor_->OnUnauthenticatedPublicHeader(header)"->"ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)";
+    "ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"->"return rv";
+    "return rv"->"framer_.ProcessPacket(packet)"[style=dashed];
+
+    subgraph cluster_OnUnauthenticatedPublicHeader {
+    "it != session_map_.end()"[shape=diamond];
+    "visitor_->OnUnauthenticatedPublicHeader(header)"->"QuicDispatcher::OnUnauthenticatedPublicHeader"[label="visitor_ = QuicDispatcher", color=green];
+    "QuicDispatcher::OnUnauthenticatedPublicHeader"->"session_map_.find(connection_id)";
+    "session_map_.find(connection_id)"->"it != session_map_.end()";
+    "it != session_map_.end()"->"it->second->ProcessUdpPacket"[label=Y];
+    "it != session_map_.end()"->"buffered_packets_.HasChloForConnection(connection_id)"[label=N];
+    "buffered_packets_.HasChloForConnection(connection_id)"->"OnUnauthenticatedUnknownPublicHeader(header)";
+    "OnUnauthenticatedUnknownPublicHeader(header)"->"time_wait_list_manager_->IsConnectionIdInTimeWait(connection_id)";
+    "time_wait_list_manager_->IsConnectionIdInTimeWait(connection_id)"->"if (!framer_.IsSupportedVersion(packet_version))";
+    "if (!framer_.IsSupportedVersion(packet_version))"->"time_wait_list_manager()->SendVersionNegotiationPacket"[label=Y];
+    "if (!framer_.IsSupportedVersion(packet_version))"->"framer_.set_version(version)"[label=N];
+    "framer_.set_version(version)"->"return true";
+    }
+}
