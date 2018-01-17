@@ -1,0 +1,31 @@
+digraph ProcessPacket {
+    "bool QuicFramer::ProcessDataPacket"[style=filled, fillcolor=red];
+    "!visitor_->OnUnauthenticatedPublicHeader(header)"[shape=diamond];
+    "!ProcessPublicHeader(&reader, &header)"[shape=diamond];
+    "bool QuicFramer::ProcessDataPacket"->"visitor_->OnPacket()"[style=dashed];
+    "visitor_->OnPacket()"->"!ProcessPublicHeader(&reader, &header)";
+    "!ProcessPublicHeader(&reader, &header)"->"return RaiseError(QUIC_INVALID_PACKET_HEADER)"[label=Y];
+    "return RaiseError(QUIC_INVALID_PACKET_HEADER)"->"bool QuicFramer::ProcessDataPacket"[style=dashed];
+    "!ProcessPublicHeader(&reader, &header)"->"!visitor_->OnUnauthenticatedPublicHeader(header)"[label=N];
+    "!visitor_->OnUnauthenticatedPublicHeader(header)"->"bool QuicFramer::ProcessDataPacket"[label="Y  return true", style=dashed];
+    "!visitor_->OnUnauthenticatedPublicHeader(header)"->"rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"[label=N];
+    "rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"->"bool QuicFramer::ProcessDataPacket"[label="return rv", style=dashed];
+
+subgraph cluster_ProcessDataPacket {
+    "!ProcessUnauthenticatedHeader(encrypted_reader, header)"[shape=diamond];
+    "!DecryptPayload"[shape=diamond];   
+    "!visitor_->OnPacketHeader(*header)"[shape=diamond];
+    "!ProcessFrameData(&reader, *header)"[shape=diamond];
+    "bool QuicFramer::ProcessDataPacket"->"!ProcessUnauthenticatedHeader(encrypted_reader, header)";
+    "!ProcessUnauthenticatedHeader(encrypted_reader, header)"->"rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"[label="Y  return false", style=dashed];
+    "!ProcessUnauthenticatedHeader(encrypted_reader, header)"->"!DecryptPayload"[label=N];
+    "!DecryptPayload"->"rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"[label="Y  return false", style=dashed];
+    "!DecryptPayload"->"!visitor_->OnPacketHeader(*header)"[label=N];
+    "!visitor_->OnPacketHeader(*header)"->"rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"[label="Y  return true", style=dashed];
+    "!visitor_->OnPacketHeader(*header)"->"!ProcessFrameData(&reader, *header)"[label=N];
+    "!ProcessFrameData(&reader, *header)"->"rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"[label="Y  return false", style=dashed];
+    "!ProcessFrameData(&reader, *header)"->"visitor_->OnPacketComplete()"[label=N];
+    "visitor_->OnPacketComplete()"->"rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"[label="return true"];
+
+}
+}

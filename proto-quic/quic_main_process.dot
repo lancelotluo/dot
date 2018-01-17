@@ -1,20 +1,20 @@
 digraph process_packet {
-    "QuicDispatcher::ProcessPacket"[color=red];
-    "framer_.ProcessPacket(packet)"[color=red];
-
+    "QuicDispatcher::ProcessPacket"[style=filled, fillcolor=red];
+    "framer_.ProcessPacket(packet)"[style=filled, fillcolor=red];
+    edge [color=green];
     "QuicDispatcher::ProcessPacket"->"framer_.ProcessPacket(packet)";
-    "framer_.ProcessPacket(packet)"->"visitor_->OnPacket()"[style=dashed];
+    "framer_.ProcessPacket(packet)"->"QuicFramer::ProcessPacket(const QuicEncryptedPacket& packet)"[style=dashed];
+    "QuicFramer::ProcessPacket(const QuicEncryptedPacket& packet)"->"visitor_->OnPacket()"[style=dashed];
     "visitor_->OnPacket()"->"ProcessPublicHeader(&reader, &header)";
     "ProcessPublicHeader(&reader, &header)"->"visitor_->OnUnauthenticatedPublicHeader(header)";
     "visitor_->OnUnauthenticatedPublicHeader(header)"->"ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)";
-    "ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"->"return rv";
-    "return rv"->"framer_.ProcessPacket(packet)"[style=dashed];
+    "ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"->"QuicFramer::ProcessPacket(const QuicEncryptedPacket& packet)"[style=dashed, label="return rv"];
 
     subgraph cluster_OnUnauthenticatedPublicHeader {
     edge [color=green];
     "it != session_map_.end()"[shape=diamond];
-    "visitor_->OnUnauthenticatedPublicHeader(header)"->"QuicDispatcher::OnUnauthenticatedPublicHeader"[label="visitor_ = QuicDispatcher", color=green];
-    "QuicDispatcher::OnUnauthenticatedPublicHeader"->"session_map_.find(connection_id)";
+    "visitor_->OnUnauthenticatedPublicHeader(header)"->"QuicDispatcher::OnUnauthenticatedPublicHeader"[label="visitor_ = QuicDispatcher 第一次循环", style=dashed];
+    "QuicDispatcher::OnUnauthenticatedPublicHeader"->"session_map_.find(connection_id)"[style=dashed];
     "session_map_.find(connection_id)"->"it != session_map_.end()";
     "it != session_map_.end()"->"it->second->ProcessUdpPacket"[label=Y];
     "it->second->ProcessUdpPacket"->"return false";
@@ -25,7 +25,30 @@ digraph process_packet {
     "time_wait_list_manager_->IsConnectionIdInTimeWait(connection_id)"->"if (!framer_.IsSupportedVersion(packet_version))";
     "if (!framer_.IsSupportedVersion(packet_version))"->"time_wait_list_manager()->SendVersionNegotiationPacket"[label=Y];
     "if (!framer_.IsSupportedVersion(packet_version))"->"framer_.set_version(version)"[label=N];
-    "framer_.set_version(version)"->"return true";
-    "return true"->"QuicDispatcher::OnUnauthenticatedPublicHeader"[style=dashed];
+    "framer_.set_version(version)"->"QuicDispatcher::OnUnauthenticatedPublicHeader"[style=dashed, label="return true"];
+    }
+
+    subgraph cluster_dispatcher_ProcessDataPacket {
+    edge [color=green];
+    "ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"->"ProcessUnauthenticatedHeader(encrypted_reader, header)"[style=dashed];
+    "ProcessUnauthenticatedHeader(encrypted_reader, header)"->"DecryptPayload(encrypted_reader, *header, packet, decrypted_buffer,buffer_length, &decrypted_length)";
+    "DecryptPayload(encrypted_reader, *header, packet, decrypted_buffer,buffer_length, &decrypted_length)"->"visitor_->OnPacketHeader(*header)";
+    "visitor_->OnPacketHeader(*header)"->"ProcessFrameData(&reader, *header)";
+    "ProcessFrameData(&reader, *header)"->"visitor_->OnPacketComplete()";
+    "visitor_->OnPacketComplete()"->"ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"[style=dashed, label="return true"];
+    "ProcessUnauthenticatedHeader(encrypted_reader, header)"->"ProcessAndCalculatePacketNumber"[style=dashed];
+    "ProcessAndCalculatePacketNumber"->"visitor_->OnUnauthenticatedHeader(*header)";
+    "visitor_->OnUnauthenticatedHeader(*header)"->"ProcessUnauthenticatedHeader(encrypted_reader, header)"[style=dashed, label="return true"];
+
+    }
+    subgraph cluster_dispatcher_OnUnauthenticatedHeader {
+    "fate = ValidityChecks(header)"[shape=diamond];
+    "visitor_->OnUnauthenticatedHeader(*header)"->"bool QuicDispatcher::OnUnauthenticatedHeader(const QuicPacketHeader& header)"[style=dashed, label="visitor_ = QuicDispatcher"];
+    "bool QuicDispatcher::OnUnauthenticatedHeader(const QuicPacketHeader& header)"->"time_wait_list_manager_->IsConnectionIdInTimeWait(header.connection_id)"[style=dashed];
+    "time_wait_list_manager_->IsConnectionIdInTimeWait(header.connection_id)"->"fate = ValidityChecks(header)";
+    "fate = ValidityChecks(header)"->"MaybeRejectStatelessly(connection_id, header.version)"[label="fate == kFateProcess"];
+    "fate = ValidityChecks(header)"->"ProcessUnauthenticatedHeaderFate(fate, connection_id)"[label="else"];
+    "MaybeRejectStatelessly(connection_id, header.version)"->"bool QuicDispatcher::OnUnauthenticatedHeader(const QuicPacketHeader& header)"[style=dashed, label="return false"];
+    "ProcessUnauthenticatedHeaderFate(fate, connection_id)"->"bool QuicDispatcher::OnUnauthenticatedHeader(const QuicPacketHeader& header)"[style=dashed, label="return false"];
     }
 }
