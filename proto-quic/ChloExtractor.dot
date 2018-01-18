@@ -1,0 +1,50 @@
+digraph {
+    "bool ChloExtractor::Extract"[style=filled, fillcolor=red];
+    "!framer.ProcessPacket(packet)"[shape=diamond];
+
+    "bool ChloExtractor::Extract"->"ChloFramerVisitor visitor(&framer, delegate)"[style=dashed];
+    "ChloFramerVisitor visitor(&framer, delegate)"->"framer.set_visitor(&visitor)";
+    "framer.set_visitor(&visitor)"->"!framer.ProcessPacket(packet)";
+    "!framer.ProcessPacket(packet)"->"bool ChloExtractor::Extract"[label="Y, return false", style=dashed];
+    "!framer.ProcessPacket(packet)"->"bool ChloExtractor::Extract"[label="N, return visitor.found_chlo()", style=dashed];
+
+    "!framer.ProcessPacket(packet)"->"bool QuicFramer::ProcessPacket(const QuicEncryptedPacket& packet)"[style=dashed];
+    "bool QuicFramer::ProcessPacket(const QuicEncryptedPacket& packet)"->"visitor_->OnPacket() visitor_=ChloFramerVisitor";
+    "visitor_->OnPacket() visitor_=ChloFramerVisitor"->"ProcessPublicHeader(&reader, &header)";
+    "ProcessPublicHeader(&reader, &header)"->"visitor_->OnUnauthenticatedPublicHeader(header) visitor_=ChloFramerVisitor";
+    "visitor_->OnUnauthenticatedPublicHeader(header) visitor_=ChloFramerVisitor"->"ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)";
+    "ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"->"!framer.ProcessPacket(packet)"[label="return rv", style=dashed];
+    
+    "ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"->"ProcessUnauthenticatedHeader(encrypted_reader, header)"[style=dashed];
+    "ProcessUnauthenticatedHeader(encrypted_reader, header)"->"DecryptPayload";
+    "DecryptPayload"->"ProcessFrameData(&reader, *header)";
+    "ProcessFrameData(&reader, *header)"->"visitor_->OnPacketComplete()";
+    "visitor_->OnPacketComplete()"->"ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"[label="return true", style=dashed];
+
+    "ProcessFrameData(&reader, *header)"->"ProcessStreamFrame(reader, frame_type, &frame)"[style=dashed];
+    "ProcessStreamFrame(reader, frame_type, &frame)"->"visitor_->OnStreamFrame(frame)";
+    "visitor_->OnStreamFrame(frame)"->"ProcessFrameData(&reader, *header)"[label="return true", style=dashed];
+
+    "visitor_->OnStreamFrame(frame)"->"bool ChloFramerVisitor::OnStreamFrame(const QuicStreamFrame& frame)"[style=dashed];
+    "bool ChloFramerVisitor::OnStreamFrame(const QuicStreamFrame& frame)"->"crypto_framer.set_visitor(this)"[style=dashed];
+    "crypto_framer.set_visitor(this)"->"crypto_framer.ProcessInput(data, Perspective::IS_SERVER)";
+    "crypto_framer.ProcessInput(data, Perspective::IS_SERVER)"->"visitor_->OnStreamFrame(frame)"[label="return true", style=dashed];
+    "crypto_framer.ProcessInput(data, Perspective::IS_SERVER)"->"Process(input, perspective)"[style=dashed];
+    "Process(input, perspective)"->"crypto_framer.ProcessInput(data, Perspective::IS_SERVER)"[style=dashed, label="return true"];
+    "Process(input, perspective)"->"visitor_->OnHandshakeMessage(message_)"[style=dashed];
+    "visitor_->OnHandshakeMessage(message_)"->"Process(input, perspective)"[style=dashed, label="return QUIC_NO_ERROR"];
+
+    "visitor_->OnHandshakeMessage(message_)"->"void ChloFramerVisitor::OnHandshakeMessage"[style=dashed];
+    "void ChloFramerVisitor::OnHandshakeMessage"->"delegate_->OnChlo(framer_->transport_version(), connection_id_, message)"[style=dashed];
+    "delegate_->OnChlo(framer_->transport_version(), connection_id_, message)"->"found_chlo_ = true";
+    "found_chlo_ = true"->"visitor_->OnHandshakeMessage(message_)"[style=dashed];
+
+    "delegate_->OnChlo(framer_->transport_version(), connection_id_, message)"->"ChloExtractor::Delegate::OnChlo(version, connection_id, chlo)"[style=dashed];
+    "ChloExtractor::Delegate::OnChlo(version, connection_id, chlo)"->"ChloAlpnExtractor::OnChlo(version, connection_id, chlo)"[style=dashed];
+    "ChloAlpnExtractor::OnChlo(version, connection_id, chlo)"->"rejector_->OnChlo";
+    "rejector_->OnChlo"->"ChloExtractor::Delegate::OnChlo(version, connection_id, chlo)"[style=dashed];
+
+    "rejector_->OnChlo"->"void StatelessRejector::OnChlo"[style=dashed];
+    "void StatelessRejector::OnChlo"->"设置state_, 拷贝握手消息，很简单"[style=dashed];
+    "设置state_, 拷贝握手消息，很简单"->"rejector_->OnChlo"[style=dashed];
+}

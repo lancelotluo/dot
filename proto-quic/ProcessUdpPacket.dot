@@ -1,0 +1,80 @@
+digraph {
+    "void QuicSession::ProcessUdpPacket"[style=filled, fillcolor=red];
+    "connection_->ProcessUdpPacket(self_address, peer_address, packet)"[style=filled, fillcolor=red];
+    "session->ProcessUdpPacket(current_server_address_, current_client_address_,
+                                *current_packet_);" [style=filled, fillcolor=red] ;
+
+    "session->ProcessUdpPacket(current_server_address_, current_client_address_,
+                                *current_packet_);"->"void QuicSession::ProcessUdpPacket"[style=dashed];
+    "void QuicSession::ProcessUdpPacket"->"connection_->ProcessUdpPacket(self_address, peer_address, packet)"[style=dashed];
+    "connection_->ProcessUdpPacket(self_address, peer_address, packet)"->"void QuicSession::ProcessUdpPacket"[style=dashed];
+
+    "connection_->ProcessUdpPacket(self_address, peer_address, packet)"->"void QuicConnection::ProcessUdpPacket"[style=dashed];
+    "void QuicConnection::ProcessUdpPacket"->"debug_visitor_->OnPacketReceived(self_address, peer_address, packet)"[style=dashed];
+    "debug_visitor_->OnPacketReceived(self_address, peer_address, packet)"->
+    "stats_.bytes_received += packet.length();
+     ++stats_.packets_received
+     统计接收字节数和packets数";
+    "stats_.bytes_received += packet.length();
+     ++stats_.packets_received
+     统计接收字节数和packets数"->
+    "std::abs((packet.receipt_time() - clock_->ApproximateNow()).ToSeconds()
+     如果接收间隔超过1分钟，打印日志";
+    "std::abs((packet.receipt_time() - clock_->ApproximateNow()).ToSeconds()
+     如果接收间隔超过1分钟，打印日志"->"framer_.ProcessPacket(packet)";
+    "framer_.ProcessPacket(packet)"->
+    "++stats_.packets_processed 统计处理的包量，
+    这样packets_processed-packets_received应该是不能正常处理的包量";
+    "++stats_.packets_processed 统计处理的包量，
+    这样packets_processed-packets_received应该是不能正常处理的包量"->"MaybeProcessUndecryptablePackets()";
+    "MaybeProcessUndecryptablePackets()"->"MaybeSendInResponseToPacket()";
+    "MaybeSendInResponseToPacket()"->"SetPingAlarm()";
+    "SetPingAlarm()"->"current_packet_data_ = nullptr";
+    "current_packet_data_ = nullptr"->"void QuicConnection::ProcessUdpPacket"[style=dashed];
+
+    "QuicConnection初始化的时候将framer_.visitor_设置成了QuicConnection
+    同样地，经过visitor_->OnUnauthenticatedPublicHeader(header)等一系列处理"[style=filled, fillcolor=green];
+
+    "framer_.ProcessPacket(packet)"->
+    "QuicConnection初始化的时候将framer_.visitor_设置成了QuicConnection
+    同样地，经过visitor_->OnUnauthenticatedPublicHeader(header)等一系列处理"[style=dashed];
+    "QuicConnection初始化的时候将framer_.visitor_设置成了QuicConnection
+    同样地，经过visitor_->OnUnauthenticatedPublicHeader(header)等一系列处理"->"visitor_->OnStreamFrame(frame)"[style=dashed];
+    "visitor_->OnStreamFrame(frame)"->"bool QuicConnection::OnStreamFrame(const QuicStreamFrame& frame)"[style=dashed];
+    "bool QuicConnection::OnStreamFrame(const QuicStreamFrame& frame)"->"UpdatePacketContent(NOT_PADDED_PING)"[style=dashed];
+    "UpdatePacketContent(NOT_PADDED_PING)"->"visitor_->OnStreamFrame(frame)";
+    "visitor_->OnStreamFrame(frame)"->"visitor_->PostProcessAfterData()";
+    "visitor_->PostProcessAfterData()"->"stats_.stream_bytes_received += frame.data_length";
+    "stats_.stream_bytes_received += frame.data_length"->"should_last_packet_instigate_acks_ = true";
+    "should_last_packet_instigate_acks_ = true"->"visitor_->OnStreamFrame(frame)"[style=dashed, label="return connected_"];
+
+    
+    "visitor_->OnStreamFrame(frame)"[style=filled, fillcolor=green];
+    "visitor_->OnStreamFrame(frame)"->
+    "visitor_在QuicSession::Initialize()时设置了
+    connection_->set_visitor(this) this指向QuicSimpleServerSession"[style=dashed];
+    "visitor_在QuicSession::Initialize()时设置了
+    connection_->set_visitor(this) this指向QuicSimpleServerSession"->"void QuicSimpleServerSession::OnStreamFrame(const QuicStreamFrame& frame)";
+    "void QuicSimpleServerSession::OnStreamFrame(const QuicStreamFrame& frame)"->"QuicSpdySession::OnStreamFrame(frame)"[style=dashed];
+    "QuicSpdySession::OnStreamFrame(frame)"->"void QuicSession::OnStreamFrame(const QuicStreamFrame& frame)"[style=dashed];
+    "void QuicSession::OnStreamFrame(const QuicStreamFrame& frame)"->"QuicStream* stream = GetOrCreateStream(stream_id)"[style=dashed];
+    "QuicStream* stream = GetOrCreateStream(stream_id)"->"stream->OnStreamFrame(frame)";
+    "stream->OnStreamFrame(frame)"->"sequencer_.OnStreamFrame(frame)"[style=dashed];
+    "sequencer_.OnStreamFrame(frame)"->"void QuicStreamSequencer::OnStreamFrame(const QuicStreamFrame& frame)"[style=dashed];
+    "void QuicStreamSequencer::OnStreamFrame(const QuicStreamFrame& frame)"->"buffered_frames_.OnStreamData";
+    "buffered_frames_.OnStreamData"->"if (blocked_)";
+    "if (blocked_)"->"if (byte_offset == buffered_frames_.BytesConsumed())";
+    "if (byte_offset == buffered_frames_.BytesConsumed())"->"stream_->OnDataAvailable()";
+    
+    "stream_->OnDataAvailable()"->"void QuicCryptoStream::OnDataAvailable()";
+    "void QuicCryptoStream::OnDataAvailable()"->"crypto_message_parser()->ProcessInput";
+    "crypto_message_parser()->ProcessInput"->"bool CryptoFramer::ProcessInput"[style=dashed];
+    "bool CryptoFramer::ProcessInput"->"Process(input, perspective)";
+    "Process(input, perspective)"->"visitor_->OnHandshakeMessage(message_)";
+    "visitor_->OnHandshakeMessage(message_)"->
+    "void QuicCryptoServerHandshaker::OnHandshakeMessage(
+    const CryptoHandshakeMessage& message)";
+    "void QuicCryptoServerHandshaker::OnHandshakeMessage(
+    const CryptoHandshakeMessage& message)"->
+    "这个函数将正式开启握手消息的处理，比较复杂，另开章节";
+}

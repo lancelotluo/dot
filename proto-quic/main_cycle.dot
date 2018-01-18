@@ -39,4 +39,30 @@ subgraph cluster_ProcessDataPacket {
     "!visitor_->OnUnauthenticatedHeader(*header)"->"!ProcessUnauthenticatedHeader(encrypted_reader, header)"[label="Y,  return false", style=dashed];
     "!visitor_->OnUnauthenticatedHeader(*header)"->"!ProcessUnauthenticatedHeader(encrypted_reader, header)"[label="return true", style=dashed, color=red];
 }
+    subgraph cluster_ProcessFrameData {
+    "判断stream类型"[shape=diamond];
+    "visitor_->OnStreamFrame(frame)"[style=filled, fillcolor=green];
+    "visitor_->OnAckFrame(frame)"[style=filled, fillcolor=green];
+    "PADDING,RST_STREAM,CONNECTION_CLOSE,GOAWAY, WINDOW_UPDATE, BLOCKED, STOP_WAITING, PING
+    等类型的Frame的处理逻辑类似，都会调用相应的visitor_->On{type}Frame函数"[style=filled, fillcolor=green];
+
+    "!ProcessFrameData(&reader, *header)"->"判断stream类型"[style=dashed];
+    "判断stream类型"->"Stream Frame";
+    "Stream Frame"->"ProcessStreamFrame(reader, frame_type, &frame)";
+    "ProcessStreamFrame(reader, frame_type, &frame)"->"visitor_->OnStreamFrame(frame)";
+    "visitor_->OnStreamFrame(frame)"->"!ProcessFrameData(&reader, *header)"[label="return true", style=dashed];
+
+    "判断stream类型"->"Ack Frame";
+    "Ack Frame"->"ProcessAckFrame(reader, frame_type, &frame)";
+    "ProcessAckFrame(reader, frame_type, &frame)"->"visitor_->OnAckFrame(frame)";
+    "visitor_->OnAckFrame(frame)"->"!ProcessFrameData(&reader, *header)"[label="return true", style=dashed];
+    
+    "判断stream类型"->
+    "PADDING,RST_STREAM,CONNECTION_CLOSE,GOAWAY, WINDOW_UPDATE, BLOCKED, STOP_WAITING, PING
+    等类型的Frame的处理逻辑类似，都会调用相应的visitor_->On{type}Frame函数";
+    "PADDING,RST_STREAM,CONNECTION_CLOSE,GOAWAY, WINDOW_UPDATE, BLOCKED, STOP_WAITING, PING
+    等类型的Frame的处理逻辑类似，都会调用相应的visitor_->On{type}Frame函数"->"!ProcessFrameData(&reader, *header)"[label="return true", style=dashed];
+
+
+    }
 }
