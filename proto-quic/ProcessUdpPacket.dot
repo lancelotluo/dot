@@ -35,22 +35,37 @@ digraph {
     "QuicConnection初始化的时候将framer_.visitor_设置成了QuicConnection
     同样地，经过visitor_->OnUnauthenticatedPublicHeader(header)等一系列处理"[style=filled, fillcolor=green];
 
-    "framer_.ProcessPacket(packet)"->
-    "QuicConnection初始化的时候将framer_.visitor_设置成了QuicConnection
-    同样地，经过visitor_->OnUnauthenticatedPublicHeader(header)等一系列处理"[style=dashed];
-    "QuicConnection初始化的时候将framer_.visitor_设置成了QuicConnection
-    同样地，经过visitor_->OnUnauthenticatedPublicHeader(header)等一系列处理"->"visitor_->OnStreamFrame(frame)"[style=dashed];
-    "visitor_->OnStreamFrame(frame)"->"bool QuicConnection::OnStreamFrame(const QuicStreamFrame& frame)"[style=dashed];
+    "framer_.ProcessPacket(packet)"->"ProcessPublicHeader(&reader, &header)"[style=dashed];
+    "ProcessPublicHeader(&reader, &header)"->"visitor_->OnUnauthenticatedPublicHeader(header)";
+    "visitor_->OnUnauthenticatedPublicHeader(header)"->"rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)";
+    "rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"->"framer_.ProcessPacket(packet)"[style=dashed, label="return rv"];
+    "rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"->"ProcessUnauthenticatedHeader(encrypted_reader, header)"[style=dashed];
+    "ProcessUnauthenticatedHeader(encrypted_reader, header)"->"DecryptPayload";
+    "DecryptPayload"->"ProcessFrameData(&reader, *header)";
+    "ProcessFrameData(&reader, *header)"->"visitor_->OnPacketComplete()";
+    "visitor_->OnPacketComplete()"->"rv = ProcessDataPacket(&reader, &header, packet, buffer, kMaxPacketSize)"[labe="return true", style=dashed];
+    
+    "ProcessFrameData(&reader, *header)"->"ProcessStreamFrame(reader, frame_type, &frame)"[style=dashed];
+    "ProcessStreamFrame(reader, frame_type, &frame)"->"QuicFramer中调用的visitor_->OnStreamFrame(frame)";
+    "QuicFramer中调用的visitor_->OnStreamFrame(frame)"->"ProcessFrameData(&reader, *header)"[style=dashed, label="return true"];
+
+
+    "QuicConnection初始化的时候将framer_.visitor_设置成了QuicConnection"[style=dashed];
+
+    "QuicFramer中调用的visitor_->OnStreamFrame(frame)"->
+    "QuicConnection初始化的时候将framer_.visitor_设置成了QuicConnection"[style=dashed];
+    "QuicConnection初始化的时候将framer_.visitor_设置成了QuicConnection"->
+    "bool QuicConnection::OnStreamFrame(const QuicStreamFrame& frame)"[style=dashed];
     "bool QuicConnection::OnStreamFrame(const QuicStreamFrame& frame)"->"UpdatePacketContent(NOT_PADDED_PING)"[style=dashed];
-    "UpdatePacketContent(NOT_PADDED_PING)"->"visitor_->OnStreamFrame(frame)";
-    "visitor_->OnStreamFrame(frame)"->"visitor_->PostProcessAfterData()";
+    "UpdatePacketContent(NOT_PADDED_PING)"->"QuicConnection中调用的visitor_->OnStreamFrame(frame)";
+    "QuicConnection中调用的visitor_->OnStreamFrame(frame)"->"visitor_->PostProcessAfterData()";
     "visitor_->PostProcessAfterData()"->"stats_.stream_bytes_received += frame.data_length";
     "stats_.stream_bytes_received += frame.data_length"->"should_last_packet_instigate_acks_ = true";
-    "should_last_packet_instigate_acks_ = true"->"visitor_->OnStreamFrame(frame)"[style=dashed, label="return connected_"];
+    "should_last_packet_instigate_acks_ = true"->"QuicFramer中调用的visitor_->OnStreamFrame(frame)"[style=dashed, label="return connected_"];
 
     
-    "visitor_->OnStreamFrame(frame)"[style=filled, fillcolor=green];
-    "visitor_->OnStreamFrame(frame)"->
+    "QuicConnection中调用的visitor_->OnStreamFrame(frame)"[style=filled, fillcolor=green];
+    "QuicConnection中调用的visitor_->OnStreamFrame(frame)"->
     "visitor_在QuicSession::Initialize()时设置了
     connection_->set_visitor(this) this指向QuicSimpleServerSession"[style=dashed];
     "visitor_在QuicSession::Initialize()时设置了
@@ -77,4 +92,5 @@ digraph {
     "void QuicCryptoServerHandshaker::OnHandshakeMessage(
     const CryptoHandshakeMessage& message)"->
     "这个函数将正式开启握手消息的处理，比较复杂，另开章节";
+    "这个函数将正式开启握手消息的处理，比较复杂，另开章节"->"QuicConnection中调用的visitor_->OnStreamFrame(frame)"[style=dashed];
 }
