@@ -1,0 +1,62 @@
+digraph {
+    "client.Connect()"->"bool QuicClientBase::Connect()"[dir=both, style=dashed];
+    "bool QuicClientBase::Connect()"->
+    "while (!connected() && 
+     GetNumSentClientHellos() <= QuicCryptoClientStream::kMaxClientHellos)"[style=dashed];
+    "while (!connected() && 
+     GetNumSentClientHellos() <= QuicCryptoClientStream::kMaxClientHellos)"
+    ->"StartConnect()"[label=Y];
+    "StartConnect()"->"while (EncryptionBeingEstablished())";
+    "while (EncryptionBeingEstablished())"->"WaitForEvents()"[label=Y];
+    "WaitForEvents()"->"while (EncryptionBeingEstablished())";
+
+    "while (EncryptionBeingEstablished())"->
+    "while (!connected() && 
+     GetNumSentClientHellos() <= QuicCryptoClientStream::kMaxClientHellos)"[label=N];
+
+    "while (!connected() && 
+     GetNumSentClientHellos() <= QuicCryptoClientStream::kMaxClientHellos)"->
+    "QuicClientBase::return session()->connection()->connected()"[label=N];
+    "QuicClientBase::return session()->connection()->connected()"->"bool QuicClientBase::Connect()"[style=dashed];
+
+subgraph {
+    "StartConnect()"->"void QuicClientBase::StartConnect()"[dir=both,style=dashed];
+    "void QuicClientBase::StartConnect()"->"QuicPacketWriter* writer = network_helper_->CreateQuicPacketWriter()"[style=dashed];
+    "QuicPacketWriter* writer = network_helper_->CreateQuicPacketWriter()"->
+    "CreateQuicClientSession(new QuicConnection())";
+    "CreateQuicClientSession(new QuicConnection())"->"set_writer(writer)";
+    "set_writer(writer)"->"InitializeSession()";
+    "InitializeSession()"->"set_connected_or_attempting_connect(true)";
+    "set_connected_or_attempting_connect(true)"->"void QuicClientBase::StartConnect()"[style=dashed];
+}
+
+subgraph {
+    "InitializeSession()"->"void QuicClientBase::InitializeSession()"[dir=both,style=dashed];
+    "void QuicClientBase::InitializeSession()"->"QuicSpdyClientBase::InitializeSession()"[dir=both,style=dashed];
+    "QuicSpdyClientBase::InitializeSession()"->"client_session()->Initialize()"[style=dashed];
+    "client_session()->Initialize()"->"client_session()->CryptoConnect()";
+    "client_session()->CryptoConnect()"->"QuicSpdyClientBase::InitializeSession()"[style=dashed];
+    "client_session()->Initialize()"->"void QuicSpdyClientSession::Initialize()"[dir=both, style=dashed];
+    "void QuicSpdyClientSession::Initialize()"->"crypto_stream_ = CreateQuicCryptoStream()"[style=dashed];
+    "crypto_stream_ = CreateQuicCryptoStream()"->"QuicSpdyClientSessionBase::Initialize()"[style=dashed];
+    "QuicSpdyClientSessionBase::Initialize()"->"client_session()->Initialize()"[style=dashed];
+
+    "client_session()->CryptoConnect()"->"void QuicSpdyClientSession::CryptoConnect()"[dir=both,style=dashed];
+    "void QuicSpdyClientSession::CryptoConnect()"->"crypto_stream_->CryptoConnect()"[style=dashed];
+    "crypto_stream_->CryptoConnect()"->"void QuicSpdyClientSession::CryptoConnect()"[style=dashed];
+
+    "crypto_stream_->CryptoConnect()"->"bool QuicCryptoClientStream::CryptoConnect()"[dir=both,style=dashed];
+    "bool QuicCryptoClientStream::CryptoConnect()"->"handshaker_->CryptoConnect()"[style=dashed];
+    "handshaker_->CryptoConnect()"->"bool QuicCryptoClientStream::CryptoConnect()"[style=dashed];
+
+    "handshaker_->CryptoConnect()"->"bool QuicCryptoClientHandshaker::CryptoConnect()"[dir=both,style=dashed];
+    "bool QuicCryptoClientHandshaker::CryptoConnect()"->"next_state_ = STATE_INITIALIZE"[style=dashed];
+    "next_state_ = STATE_INITIALIZE"->"DoHandshakeLoop(nullptr)";
+    "DoHandshakeLoop(nullptr)"->"return session()->connection()->connected()";
+    "return session()->connection()->connected()"->"bool QuicCryptoClientHandshaker::CryptoConnect()"[style=dashed];
+}
+
+subgraph {
+    "DoHandshakeLoop(nullptr)"->"todo";
+}
+}
