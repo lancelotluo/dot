@@ -1,0 +1,131 @@
+digraph {
+    "client.SendRequestAndWaitForResponse"->"void QuicSpdyClientBase::SendRequestAndWaitForResponse"[dir=both,style=dashed];
+    "void QuicSpdyClientBase::SendRequestAndWaitForResponse"->"SendRequest(headers, body, fin)"[style=dashed];
+    "SendRequest(headers, body, fin)"->"while (WaitForEvents()){}";
+    "while (WaitForEvents()){}"->"void QuicSpdyClientBase::SendRequestAndWaitForResponse"[style=dashed];
+
+    "SendRequest(headers, body, fin)"->"void QuicSpdyClientBase::SendRequest"[dir=both, style=dashed];
+    "void QuicSpdyClientBase::SendRequest"->"QuicAsyncStatus rv = push_promise_index()->Try(headers, this, &handle)"[style=dashed];
+    "QuicAsyncStatus rv = push_promise_index()->Try(headers, this, &handle)"->"QuicSpdyClientStream* stream = CreateClientStream()";
+    "QuicSpdyClientStream* stream = CreateClientStream()"->"stream->SendRequest(headers.Clone(), body, fin)";
+    "stream->SendRequest(headers.Clone(), body, fin)"->"MaybeAddDataToResend(headers, body, fin)";
+    "MaybeAddDataToResend(headers, body, fin)"->"void QuicSpdyClientBase::SendRequest"[style=dashed];
+
+    subgraph {
+        "if (!body.empty())"[shape=diamond];
+        "stream->SendRequest(headers.Clone(), body, fin)"->"size_t QuicSpdyClientStream::SendRequest"[dir=both, style=dashed];
+        "size_t QuicSpdyClientStream::SendRequest"->"WriteHeaders(std::move(headers), send_fin_with_headers, nullptr)"[style=dashed];
+        "WriteHeaders(std::move(headers), send_fin_with_headers, nullptr)"->"if (!body.empty())";
+        "if (!body.empty())"->"WriteOrBufferData(body, fin, nullptr)"[label=Y];
+        "if (!body.empty())"->"return bytes_sent"[label=N];
+        "WriteOrBufferData(body, fin, nullptr)"->"return bytes_sent";
+    }
+
+    subgraph cluster_QuicSpdyStream_WriteHeaders{
+    label = "QuicSpdyStream::WriteHeaders";
+    "if (fin)"[shape=diamond];
+    "WriteHeaders(std::move(headers), send_fin_with_headers, nullptr)"->"size_t QuicSpdyStream::WriteHeaders"[dir=both, style=dashed];
+    "size_t QuicSpdyStream::WriteHeaders"->"spdy_session_->WriteHeaders"[style=dashed];
+    "spdy_session_->WriteHeaders"->"if (fin)";
+    "if (fin)"->"set_fin_sent(true)"[label=Y];
+    "if (fin)"->"QuicSpdyStream::WriteHeaders return bytes_written"[label=N];
+    "set_fin_sent(true)"->"CloseWriteSide()";
+    "CloseWriteSide()"->"QuicSpdyStream::WriteHeaders return bytes_written";
+    "QuicSpdyStream::WriteHeaders return bytes_written"->"size_t QuicSpdyStream::WriteHeaders"[style=dashed];
+    }
+    subgraph {
+    "spdy_session_->WriteHeaders"->"size_t QuicSpdySession::WriteHeaders"[dir=both, style=dashed];
+    "size_t QuicSpdySession::WriteHeaders"->"return WriteHeadersImpl"[style=dashed];
+    "return WriteHeadersImpl"->"size_t QuicSpdySession::WriteHeaders"[style=dashed];
+    } 
+    subgraph {
+        "return WriteHeadersImpl"->"size_t QuicSpdySession::WriteHeadersImpl"[dir=both, style=dashed];
+        "size_t QuicSpdySession::WriteHeadersImpl"->"SpdyHeadersIR headers_frame(id, std::move(headers))"[style=dashed];
+        "SpdyHeadersIR headers_frame(id, std::move(headers))"->"headers_frame.set_fin(fin)";
+        "headers_frame.set_fin(fin)"->"if (perspective() == Perspective::IS_CLIENT)";
+        "if (perspective() == Perspective::IS_CLIENT)"->
+        "headers_frame.set_has_priority(true);
+         headers_frame.set_weight(weight);
+         headers_frame.set_parent_stream_id(parent_stream_id);
+         headers_frame.set_exclusive(exclusive);"[label=Y];
+        "if (perspective() == Perspective::IS_CLIENT)"->
+        "SpdySerializedFrame frame(spdy_framer_.SerializeFrame(headers_frame))"[label=N];
+        "headers_frame.set_has_priority(true);
+         headers_frame.set_weight(weight);
+         headers_frame.set_parent_stream_id(parent_stream_id);
+         headers_frame.set_exclusive(exclusive);"->
+        "SpdySerializedFrame frame(spdy_framer_.SerializeFrame(headers_frame))";
+        "SpdySerializedFrame frame(spdy_framer_.SerializeFrame(headers_frame))"->
+        "headers_stream_->WriteOrBufferData";
+        "headers_stream_->WriteOrBufferData"->"QuicSpdySession::WriteHeadersImpl return frame.size()";
+        "QuicSpdySession::WriteHeadersImpl return frame.size()";
+    }
+
+    subgraph {
+    "if ((data.empty() && !fin) || fin_buffered_ || write_side_closed_)"[shape=diamond];
+    "if (data.length() > 0)"[shape=diamond];
+    "if (!had_buffered_data && (HasBufferedData() || fin_buffered_))"[shape=diamond];
+
+    "headers_stream_->WriteOrBufferData"->"void QuicStream::WriteOrBufferData"[dir=both, style=dashed];
+    "void QuicStream::WriteOrBufferData"->"if ((data.empty() && !fin) || fin_buffered_ || write_side_closed_)"[style=dashed];
+    "if ((data.empty() && !fin) || fin_buffered_ || write_side_closed_)"->"QuicStream::WriteOrBufferData return;"[label=Y];
+    "if ((data.empty() && !fin) || fin_buffered_ || write_side_closed_)"->"if (data.length() > 0)";
+    "if (data.length() > 0)"->"struct iovec iov(MakeIovec(data))"[label=Y];
+    "struct iovec iov(MakeIovec(data))"->"send_buffer_.SaveStreamData(&iov, 1, 0, data.length())";
+    "send_buffer_.SaveStreamData(&iov, 1, 0, data.length())"->"OnDataBuffered(offset, data.length(), ack_listener)"
+    "OnDataBuffered(offset, data.length(), ack_listener)"->"if (!had_buffered_data && (HasBufferedData() || fin_buffered_))";
+    "if (data.length() > 0)"->"if (!had_buffered_data && (HasBufferedData() || fin_buffered_))"[label=N];
+
+    "if (!had_buffered_data && (HasBufferedData() || fin_buffered_))"->"WriteBufferedData()"[label=Y];
+    "WriteBufferedData()"->"void QuicStream::WriteOrBufferData"[style=dashed];
+    "if (!had_buffered_data && (HasBufferedData() || fin_buffered_))"->"void QuicStream::WriteOrBufferData"[label=N, style=dashed];
+    }
+
+    subgraph {
+    "WriteBufferedData()"->"void QuicStream::WriteBufferedData()"[dir=both, style=dashed];
+    "void QuicStream::WriteBufferedData()"->"send_window = flow_controller_.SendWindowSize()";
+    "send_window = flow_controller_.SendWindowSize()"->
+    "QuicConsumedData consumed_data =
+    WritevDataInner(write_length, stream_bytes_written(), fin)";
+    "QuicConsumedData consumed_data =
+    WritevDataInner(write_length, stream_bytes_written(), fin)"->"OnStreamDataConsumed(consumed_data.bytes_consumed)";
+    "OnStreamDataConsumed(consumed_data.bytes_consumed)"->"AddBytesSent(consumed_data.bytes_consumed)";
+    //"AddBytesSent(consumed_data.bytes_consumed)"->
+    }
+
+    subgraph {
+    "if (fin && add_random_padding_after_fin_)"[shape=diamond];
+
+    "QuicConsumedData consumed_data =
+    WritevDataInner(write_length, stream_bytes_written(), fin)"->
+    "QuicConsumedData QuicStream::WritevDataInner"[dir=both, style=dashed];
+    "QuicConsumedData QuicStream::WritevDataInner"->"if (fin && add_random_padding_after_fin_)";
+    "if (fin && add_random_padding_after_fin_)"->"state = FIN_AND_PADDING"[label=Y];
+    "if (fin && add_random_padding_after_fin_)"->"return session()->WritevData(this, id(), write_length, offset, state"[label=N];
+    "state = FIN_AND_PADDING"->"return session()->WritevData(this, id(), write_length, offset, state)";
+    "return session()->WritevData(this, id(), write_length, offset, state)"->"QuicConsumedData QuicStream::WritevDataInner"[style=dashed];
+    } 
+
+    subgraph cluster_QuicSession_WritevData {
+    label = "QuicSession::WritevData";
+    "if (id == kCryptoStreamId && stream != GetMutableCryptoStream())"[shape=diamond];
+
+    "return session()->WritevData(this, id(), write_length, offset, state)"->
+    "QuicConsumedData QuicSession::WritevData"[dir=both, style=dashed];
+    "QuicConsumedData QuicSession::WritevData"->"if (id == kCryptoStreamId && stream != GetMutableCryptoStream())"[style=dashed];
+    "if (id == kCryptoStreamId && stream != GetMutableCryptoStream())"->
+    "QuicConsumedData QuicSession::WritevData"[label="Y  return QuicConsumedData(0, false)",style=dashed];
+    "if (id == kCryptoStreamId && stream != GetMutableCryptoStream())"->
+    "if (!IsEncryptionEstablished() && id != kCryptoStreamId)"[label=N];
+    "if (!IsEncryptionEstablished() && id != kCryptoStreamId)"->
+    "QuicConsumedData QuicSession::WritevData"[label="Y  return QuicConsumedData(0, false)",style=dashed];
+    "if (!IsEncryptionEstablished() && id != kCryptoStreamId)"->
+    "QuicConsumedData data = 
+    connection_->SendStreamData(id, write_length, offset, state)"[label=N];
+    "QuicConsumedData data = 
+    connection_->SendStreamData(id, write_length, offset, state)"->
+    "QuicSession::WritevData return data;";
+    "QuicSession::WritevData return data;"->"QuicConsumedData QuicSession::WritevData"[style=dashed];
+    }
+
+}
