@@ -1,0 +1,20 @@
+digraph cluster_QuicCryptoClientHandshaker_DoSendCHLO{
+    label = "void QuicCryptoClientHandshaker::DoSendCHLO";
+    "if (num_client_hellos_ > QuicCryptoClientStream::kMaxClientHellos)"[shape=diamond];
+    
+    "void QuicCryptoClientHandshaker::DoSendCHLO"->
+    "第一次ClientHello时，使用明文发送
+    session()->connection()->SetDefaultEncryptionLevel(ENCRYPTION_NONE)"[style=dashed];
+    "第一次ClientHello时，使用明文发送
+    session()->connection()->SetDefaultEncryptionLevel(ENCRYPTION_NONE)"->
+    "encryption_established_ = false";
+    "encryption_established_ = false"->
+    "if (num_client_hellos_ > QuicCryptoClientStream::kMaxClientHellos)"->
+    "void QuicCryptoClientHandshaker::DoSendCHLO"[label="Y  return", style=dashed];
+    "if (num_client_hellos_ > QuicCryptoClientStream::kMaxClientHellos)"->
+    "session()->config()->ToHandshakeMessage(&out)"[label=N];
+    "session()->config()->ToHandshakeMessage(&out)"->
+    
+    
+
+}

@@ -128,4 +128,24 @@ digraph {
     "QuicSession::WritevData return data;"->"QuicConsumedData QuicSession::WritevData"[style=dashed];
     }
 
+    subgraph cluster_QuicConnection_SendStreamData{
+    label="QuicConnection::SendStreamData";
+    "if (state == NO_FIN && write_length == 0)"[shape=diamond];
+
+    "QuicConsumedData data = 
+    connection_->SendStreamData(id, write_length, offset, state)"->
+    "QuicConnection::SendStreamData"[dir=both, style=dashed];
+    "QuicConnection::SendStreamData"->"if (state == NO_FIN && write_length == 0)"[style=dashed];
+    "if (state == NO_FIN && write_length == 0)"->"QuicConnection::SendStreamData"[label="Y return QuicConsumedData(0, false);", style=dashed];
+    "if (state == NO_FIN && write_length == 0)"->"ScopedRetransmissionScheduler alarm_delayer(this)"[label=N];
+    "ScopedRetransmissionScheduler alarm_delayer(this)"->"ScopedPacketFlusher flusher(this, SEND_ACK_IF_PENDING)";
+    "ScopedPacketFlusher flusher(this, SEND_ACK_IF_PENDING)"->"packet_generator_.ConsumeData(id, write_length, offset, state)";
+    "packet_generator_.ConsumeData(id, write_length, offset, state)"->"QuicConnection::SendStreamData"[style=dashed];
+    }
+
+    subgraph cluster_QuicPacketGenerator_ConsumeData {
+    label = "QuicPacketGenerator::ConsumeData";
+    "packet_generator_.ConsumeData(id, write_length, offset, state)"->"QuicPacketGenerator::ConsumeData"[dir=both, style=dashed];
+
+    }
 }
