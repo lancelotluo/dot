@@ -1,4 +1,8 @@
 digraph {
+    "WaitForEvents()
+    这里实现了异步"[color=red];
+    "client.Connect()"[style=filled, fillcolor=green];
+
     "client.Connect()"->"bool QuicClientBase::Connect()"[dir=both, style=dashed];
     "bool QuicClientBase::Connect()"->
     "while (!connected() && 
@@ -7,8 +11,11 @@ digraph {
      GetNumSentClientHellos() <= QuicCryptoClientStream::kMaxClientHellos)"
     ->"StartConnect()"[label=Y];
     "StartConnect()"->"while (EncryptionBeingEstablished())";
-    "while (EncryptionBeingEstablished())"->"WaitForEvents()"[label=Y];
-    "WaitForEvents()"->"while (EncryptionBeingEstablished())";
+    "while (EncryptionBeingEstablished())"->
+    "WaitForEvents()
+    这里实现了异步"[label=Y];
+    "WaitForEvents()
+    这里实现了异步"->"while (EncryptionBeingEstablished())";
 
     "while (EncryptionBeingEstablished())"->
     "while (!connected() && 
@@ -57,6 +64,7 @@ subgraph {
 }
 
 subgraph {
+    "todo"[style=filled,fillcolor=gray];
     "DoHandshakeLoop(nullptr)"->"todo";
 }
 }

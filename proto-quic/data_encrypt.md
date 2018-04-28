@@ -1,4 +1,7 @@
 [toc]
+# 什么时候对数据加密？
+
+＃什么时候解密？
 
 # 数据加密级别
 * EncryptionLevel::ENCRYPTION_NONE
