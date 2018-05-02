@@ -1,0 +1,7 @@
+digraph {
+    "base::MessageLoopForIO message_loop"->"MessageLoopForIO() : MessageLoop(TYPE_IO){}"[style=dash, dir=both];
+    "MessageLoopForIO() : MessageLoop(TYPE_IO){}"->"MessageLoop::MessageLoop(Type type)"[style=dash, dir=both];
+    "MessageLoop::MessageLoop(Type type)"->"MessageLoop(type, MessagePumpFactoryCallback())"[style=dash];
+    "MessageLoop(type, MessagePumpFactoryCallback())"->"BindToCurrentThread()"[style=dash];
+    "BindToCurrentThread()"->"MessageLoop(type, MessagePumpFactoryCallback())"[style=dash];
+}

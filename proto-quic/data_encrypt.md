@@ -1,7 +1,9 @@
 [toc]
 # 什么时候对数据加密？
-
+1. void QuicPacketCreator::SerializePacket对数据加密
+2. 
 ＃什么时候解密？
+1. QuicFramer::ProcessDataPacket, DecryptPayload
 
 # 数据加密级别
 * EncryptionLevel::ENCRYPTION_NONE
