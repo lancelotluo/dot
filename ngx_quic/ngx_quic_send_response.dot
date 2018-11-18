@@ -14,7 +14,7 @@ digraph {
     "n = read(in->buf->file->fd, file_buf, buf_len)"->"int ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)";
     "int ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)"->"free(file_buf)";
     "free(file_buf)"->"if (in->buf->in_file)";
-    "if (in->buf->in_file)"->"in>t ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)"[label=N];
+    "if (in->buf->in_file)"->"int ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)"[label=N];
     "int ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)"->"in = in->next"[color=red];
     "in = in->next"->"while (in)循环"[color=red, style=dashed];
     "while (in)循环"->"return in"[color=red];
@@ -54,7 +54,7 @@ subgraph cluster_QuicStream_WriteOrBufferData {
     "if (!had_buffered_data && (HasBufferedData() || fin_buffered_))"->"void QuicStream::WriteOrBufferData"[label=N, style=dashed];
     "WriteBufferedData()"->"void QuicStream::WriteOrBufferData"[style=dashed];
 
-    "WriteBufferedData()"->"void QuicStream::WriteBufferedData()"[style=dashed, dir=both];
+    "WriteBufferedData()"->"void QuicStream::WriteBufferedData"[style=dashed, dir=both];
 }
 
 subgraph cluster_QuicStream_WriteBufferedData {
@@ -178,7 +178,7 @@ subgraph cluster_QuicStream_WritevDataInner {
 
     "if (id == kCryptoStreamId && stream != GetMutableCryptoStream())"[shape=diamond];
 
-    "return session()->WritevData(this, id(), write_length, offset, state)"->
+    "return session()->WritevData(this, id(), write_length, offset, state);"->
     "QuicConsumedData QuicSession::WritevData"[dir=both, style=dashed];
     "QuicConsumedData QuicSession::WritevData"->"if (id == kCryptoStreamId && stream != GetMutableCryptoStream())"[style=dashed];
     "if (id == kCryptoStreamId && stream != GetMutableCryptoStream())"->
@@ -287,6 +287,201 @@ subgraph cluster_QuicStream_WritevDataInner {
 
   }
 
+subgraph cluster_QuicConnection_ShouldGeneratePacket{
+    label="bool QuicConnection::ShouldGeneratePacket";
+
+    "  while (!run_fast_path && delegate_->ShouldGeneratePacket(
+                               HAS_RETRANSMITTABLE_DATA,
+                               has_handshake ? IS_HANDSHAKE : NOT_HANDSHAKE))"
+    ->"bool QuicConnection::ShouldGeneratePacket"[dir=both, style=dashed];
+    "bool QuicConnection::ShouldGeneratePacket"->
+    " if (handshake == IS_HANDSHAKE) {
+        return true;
+    }"[style=dashed];
+    " if (handshake == IS_HANDSHAKE) {
+        return true;
+    }"->
+    "return CanWrite(retransmittable);";
+    "return CanWrite(retransmittable);"->"bool QuicConnection::ShouldGeneratePacket"[style=dashed];
+}
+subgraph cluster_QuicConnection_CanWrite{
+    label="bool QuicConnection::CanWrite";
+    "bool QuicConnection::CanWrite"[style=filled, fillcolor=gold];
+
+    "return CanWrite(retransmittable);"->"bool QuicConnection::CanWrite"[style=dashed, dir=both];
+    "bool QuicConnection::CanWrite"->
+    "  if (!connected_) {
+    return false;
+  }";
+    "  if (!connected_) {
+    return false;
+  }"->
+    "  if (session_decides_what_to_write() &&
+      sent_packet_manager_.pending_timer_transmission_count() > 0) { 
+    // Force sending the retransmissions for HANDSHAKE, TLP, RTO, PROBING cases.
+    return true;
+  }";
+    "  if (session_decides_what_to_write() &&
+      sent_packet_manager_.pending_timer_transmission_count() > 0) { 
+    // Force sending the retransmissions for HANDSHAKE, TLP, RTO, PROBING cases.
+    return true;
+  }"->
+    "  if (add_to_blocked_list_if_writer_blocked_) {
+    if (HandleWriteBlocked()) {
+      return false;
+    }    
+  } else {
+    if (writer_->IsWriteBlocked()) {
+      visitor_->OnWriteBlocked();
+      return false;
+    }    
+  }";
+    "  if (add_to_blocked_list_if_writer_blocked_) {
+    if (HandleWriteBlocked()) {
+      return false;
+    }    
+  } else {
+    if (writer_->IsWriteBlocked()) {
+      visitor_->OnWriteBlocked();
+      return false;
+    }    
+  }"->
+    "// Allow acks to be sent immediately.
+  if (retransmittable == NO_RETRANSMITTABLE_DATA) {
+    return true;
+  }
+  // If the send alarm is set, wait for it to fire.
+  if (send_alarm_->IsSet()) {
+    return false;
+  }";
+    "// Allow acks to be sent immediately.
+  if (retransmittable == NO_RETRANSMITTABLE_DATA) {
+    return true;
+  }
+  // If the send alarm is set, wait for it to fire.
+  if (send_alarm_->IsSet()) {
+    return false;
+  }"->
+    "QuicTime now = clock_->Now();";
+    "QuicTime now = clock_->Now();"->
+    "QuicTime::Delta delay = sent_packet_manager_.TimeUntilSend(now)";
+    "QuicTime::Delta delay = sent_packet_manager_.TimeUntilSend(now)"->
+    "  if (delay.IsInfinite()) {
+    send_alarm_->Cancel();
+    return false;
+  }";
+    "  if (delay.IsInfinite()) {
+    send_alarm_->Cancel();
+    return false;
+  }"->
+    "  // Scheduler requires a delay.
+  if (!delay.IsZero()) {
+    if (delay <= release_time_into_future_) {
+      // Required delay is within pace time into future, send now.
+      return true;
+    }    
+    // Cannot send packet now because delay is too far in the future.
+    send_alarm_->Update(now + delay, QuicTime::Delta::FromMilliseconds(1));
+    return false;
+  }";
+    "  // Scheduler requires a delay.
+  if (!delay.IsZero()) {
+    if (delay <= release_time_into_future_) {
+      // Required delay is within pace time into future, send now.
+      return true;
+    }    
+    // Cannot send packet now because delay is too far in the future.
+    send_alarm_->Update(now + delay, QuicTime::Delta::FromMilliseconds(1));
+    return false;
+  }"->"bool QuicConnection::CanWrite"[label=true, style=dashed];
+
+}
+    subgraph cluster_QuicSentPacketManager_TimeUntilSend{
+    label="QuicTime::Delta QuicSentPacketManager::TimeUntilSend";
+    "QuicTime::Delta delay = sent_packet_manager_.TimeUntilSend(now)"->"QuicTime::Delta QuicSentPacketManager::TimeUntilSend"[dir=both, style=dashed];
+    "QuicTime::Delta QuicSentPacketManager::TimeUntilSend"->
+    "  if (pending_timer_transmission_count_ > 0) {
+    return QuicTime::Delta::Zero();
+  }"[style=dashed];
+    "  if (pending_timer_transmission_count_ > 0) {
+    return QuicTime::Delta::Zero();
+  }"->
+    "  if (using_pacing_) {
+    return pacing_sender_.TimeUntilSend(now,
+                                        unacked_packets_.bytes_in_flight());
+  }";
+    "  if (using_pacing_) {
+    return pacing_sender_.TimeUntilSend(now,
+                                        unacked_packets_.bytes_in_flight());
+    }"->
+    "  return send_algorithm_->CanSend(unacked_packets_.bytes_in_flight())
+             ? QuicTime::Delta::Zero()
+             : QuicTime::Delta::Infinite();";
+    "  return send_algorithm_->CanSend(unacked_packets_.bytes_in_flight())
+             ? QuicTime::Delta::Zero()
+             : QuicTime::Delta::Infinite();"->"QuicTime::Delta QuicSentPacketManager::TimeUntilSend"[style=dashed];
+}
+
+subgraph cluster_QuicSentPacketManager_TimeUntilSend{
+    label="QuicTime::Delta PacingSender::TimeUntilSend";
+    "!sender_->CanSend(bytes_in_flight)"[shape=diamond, style=filled, fillcolor=gold];
+    
+    "  if (using_pacing_) {
+    return pacing_sender_.TimeUntilSend(now,
+                                        unacked_packets_.bytes_in_flight())"->
+    "QuicTime::Delta PacingSender::TimeUntilSend"[style=dashed, dir=both];
+    "QuicTime::Delta PacingSender::TimeUntilSend"->
+    "!sender_->CanSend(bytes_in_flight)"[style=dashed];
+    "!sender_->CanSend(bytes_in_flight)"->"QuicTime::Delta PacingSender::TimeUntilSend"[label="Y && return QuicTime::Delta::Infinite()", style=dashed];
+    "!sender_->CanSend(bytes_in_flight)"->
+    "  if (burst_tokens_ > 0 || bytes_in_flight == 0 || lumpy_tokens_ > 0) {
+    // Don't pace if we have burst tokens available or leaving quiescence.
+    return QuicTime::Delta::Zero();
+  }"[label=N];
+    "  if (burst_tokens_ > 0 || bytes_in_flight == 0 || lumpy_tokens_ > 0) {
+    // Don't pace if we have burst tokens available or leaving quiescence.
+    return QuicTime::Delta::Zero();
+  }"->
+    "  if (ideal_next_packet_send_time_ > now + alarm_granularity_) {
+    return ideal_next_packet_send_time_ - now;
+  }";
+    "  if (ideal_next_packet_send_time_ > now + alarm_granularity_) {
+    return ideal_next_packet_send_time_ - now;
+  }"->"QuicTime::Delta PacingSender::TimeUntilSend"[label=" return QuicTime::Delta::Zero()"];
+
+}
+
+subgraph cluster_TcpCubicSenderBytes_CanSend{
+
+   "!sender_->CanSend(bytes_in_flight)"->
+    "virtual bool CanSend(QuicByteCount bytes_in_flight) = 0";
+    "virtual bool CanSend(QuicByteCount bytes_in_flight) = 0"->
+    "bool TcpCubicSenderBytes::CanSend(QuicByteCount bytes_in_flight)";
+    "bool TcpCubicSenderBytes::CanSend(QuicByteCount bytes_in_flight)"->
+    "  if (!no_prr_ && InRecovery()) {
+    // PRR is used when in recovery.
+    return prr_.CanSend(GetCongestionWindow(), bytes_in_flight,
+                        GetSlowStartThreshold());
+  }"[style=dashed];
+    "  if (!no_prr_ && InRecovery()) {
+    // PRR is used when in recovery.
+    return prr_.CanSend(GetCongestionWindow(), bytes_in_flight,
+                        GetSlowStartThreshold());
+  }"->
+    "  if (GetCongestionWindow() > bytes_in_flight) {
+    return true;
+  }";
+    "  if (GetCongestionWindow() > bytes_in_flight) {
+    return true;
+  }"->
+    "  if (min4_mode_ && bytes_in_flight < 4 * kDefaultTCPMSS) {
+    return true;
+  }";
+    "  if (min4_mode_ && bytes_in_flight < 4 * kDefaultTCPMSS) {
+    return true;
+  }"->"bool TcpCubicSenderBytes::CanSend(QuicByteCount bytes_in_flight)"[style=dashed, label="return false"];
+
+}
     subgraph cluster_QuicPacketCreator_ConsumeData {
     label = "bool QuicPacketCreator::ConsumeData";
 
@@ -301,6 +496,201 @@ subgraph cluster_QuicStream_WritevDataInner {
 
     }
 
+subgraph cluster_QuicPacketCreator_Flush{
+    label="void QuicPacketCreator::Flush()";
+    "if (!HasPendingFrames() && pending_padding_bytes_ == 0)"[shape=diamond];
+    
+    "packet_creator_.Flush()"->"void QuicPacketCreator::Flush()"[dir=both, style=dashed];
+    "void QuicPacketCreator::Flush()"->"if (!HasPendingFrames() && pending_padding_bytes_ == 0)"[style=dashed];
+    "if (!HasPendingFrames() && pending_padding_bytes_ == 0)"->"void QuicPacketCreator::Flush()"[label="Y && return", style=dashed]
+    "if (!HasPendingFrames() && pending_padding_bytes_ == 0)"->"serialized_packet_buffer = delegate_->GetPacketBuffer()"[label=N];
+    "serialized_packet_buffer = delegate_->GetPacketBuffer()"->"SerializePacket(serialized_packet_buffer, kMaxPacketSize)";
+    "SerializePacket(serialized_packet_buffer, kMaxPacketSize)"->"OnSerializedPacket()";
+    "OnSerializedPacket()"->"void QuicPacketCreator::Flush()"[style=dashed];
+}
+subgraph cluster_QuicPacketCreator_SerializePacket{
+    label="void QuicPacketCreator::SerializePacket";
+
+    "SerializePacket(serialized_packet_buffer, kMaxPacketSize)"->
+    "void QuicPacketCreator::SerializePacket"[dir=both, style=dashed];
+    "void QuicPacketCreator::SerializePacket"->"FillPacketHeader(&header)"[style=dashed];
+    "FillPacketHeader(&header)"->"MaybeAddPadding()";
+    "MaybeAddPadding()"->
+    "framer_->BuildDataPacket(header, queued_frames_,
+    encrypted_buffer, packet_size_)";
+    "framer_->BuildDataPacket(header, queued_frames_,
+    encrypted_buffer, packet_size_)"->
+    "encrypted_length = framer_->EncryptInPlace(
+    packet_.encryption_level, packet_.packet_number,
+    GetStartOfEncryptedData(framer_->transport_version(), header), length,
+    encrypted_buffer_len, encrypted_buffer)";
+    "encrypted_length = framer_->EncryptInPlace(
+    packet_.encryption_level, packet_.packet_number,
+    GetStartOfEncryptedData(framer_->transport_version(), header), length,
+    encrypted_buffer_len, encrypted_buffer)"->"queued_frames_.clear()";
+    "queued_frames_.clear()"->
+    "packet_.encrypted_buffer = encrypted_buffer;
+    packet_.encrypted_length = encrypted_length;";
+    "packet_.encrypted_buffer = encrypted_buffer;
+    packet_.encrypted_length = encrypted_length;"->
+    "void QuicPacketCreator::SerializePacket"[style=dashed];
+
+}
+subgraph cluster_QuicPacketCreator_OnSerializedPacket {
+    "OnSerializedPacket()"->
+    "void QuicPacketCreator::OnSerializedPacket()"[dir=both, style=dashed];
+    
+    "void QuicPacketCreator::OnSerializedPacket()"->"SerializedPacket packet(std::move(packet_))"[style=dashed];
+    "SerializedPacket packet(std::move(packet_))"->"ClearPacket()";
+    "ClearPacket()"->"delegate_->OnSerializedPacket(&packet)";
+    "delegate_->OnSerializedPacket(&packet)"->"void QuicPacketCreator::OnSerializedPacket()"[style=dashed];
+}
+
+subgraph cluster_QuicConnection_OnSerializedPacket {
+    label="void QuicConnection::OnSerializedPacket";
+    "delegate_->OnSerializedPacket(&packet)"->"void QuicConnection::OnSerializedPacket"[style=dashed, dir=both];
+    "void QuicConnection::OnSerializedPacket"->"SendOrQueuePacket(serialized_packet)"[style=dashed];
+    "SendOrQueuePacket(serialized_packet)"->"void QuicConnection::OnSerializedPacket"[style=dashed];
+}
+subgraph cluster_QuicConnection_SendOrQueuePacket {
+    label="void QuicConnection::SendOrQueuePacket";
+    "if (!queued_packets_.empty() || !WritePacket(packet))"[shape=diamond];
+
+    "SendOrQueuePacket(serialized_packet)"->"void QuicConnection::SendOrQueuePacket"[style=dashed, dir=both];
+    "void QuicConnection::SendOrQueuePacket"->"if (!queued_packets_.empty() || !WritePacket(packet))"[style=dashed];
+    "if (!queued_packets_.empty() || !WritePacket(packet))"->"packet->encrypted_buffer = CopyBuffer(*packet)"[label=Y];
+    "packet->encrypted_buffer = CopyBuffer(*packet)"->"queued_packets_.push_back(*packet)";
+    "queued_packets_.push_back(*packet)"->"packet->retransmittable_frames.clear()";
+    "packet->retransmittable_frames.clear()"->"ClearSerializedPacket(packet)";
+    "if (!queued_packets_.empty() || !WritePacket(packet))"->"ClearSerializedPacket(packet)"[label=N];
+    "ClearSerializedPacket(packet)"->"void QuicConnection::SendOrQueuePacket"[style=dashed];
+}
+
+subgraph cluster_QuicConnection_WritePacket{
+    label="bool QuicConnection::WritePacket(SerializedPacket* packet)";
+    
+    "if (!queued_packets_.empty() || !WritePacket(packet))"->
+    "bool QuicConnection::WritePacket(SerializedPacket* packet)"[dir=both, style=dashed];
+    "bool QuicConnection::WritePacket(SerializedPacket* packet)"->
+    "  if (ShouldDiscardPacket(*packet)) {
+    ++stats_.packets_discarded;
+    return true;
+    }"[style=dashed];
+    "  if (ShouldDiscardPacket(*packet)) {
+    ++stats_.packets_discarded;
+    return true;
+    }"->
+    "  if (packet->packet_number < sent_packet_manager_.GetLargestSentPacket()) {
+    RecordInternalErrorLocation(QUIC_CONNECTION_WRITE_PACKET);
+    return true;
+    }";
+    "  if (packet->packet_number < sent_packet_manager_.GetLargestSentPacket()) {
+    RecordInternalErrorLocation(QUIC_CONNECTION_WRITE_PACKET);
+    return true;
+    }"->
+    "  const bool is_termination_packet = IsTerminationPacket(*packet);
+  if (HandleWriteBlocked() && !is_termination_packet) {
+    return false;
+  }";
+    "  const bool is_termination_packet = IsTerminationPacket(*packet);
+  if (HandleWriteBlocked() && !is_termination_packet) {
+    return false;
+  }"->
+    "  // Measure the RTT from before the write begins to avoid underestimating the
+  // min_rtt_, especially in cases where the thread blocks or gets swapped out
+  // during the WritePacket below.
+  QuicTime packet_send_time = clock_->Now();
+  if (supports_release_time_ && per_packet_options_ != nullptr) {
+    QuicTime next_release_time = sent_packet_manager_.GetNextReleaseTime();
+    uint64_t release_time_delay_ns = 0;
+    QuicTime now = packet_send_time;
+    if (next_release_time > now) {
+      release_time_delay_ns = (next_release_time - now).ToMicroseconds() * 1000;
+      // Set packet_send_time to the future to make the RTT estimation accurate.
+      packet_send_time = next_release_time;
+    }
+    per_packet_options_->SetReleaseTimeDelay(release_time_delay_ns);
+  }";
+    "  // Measure the RTT from before the write begins to avoid underestimating the
+  // min_rtt_, especially in cases where the thread blocks or gets swapped out
+  // during the WritePacket below.
+  QuicTime packet_send_time = clock_->Now();
+  if (supports_release_time_ && per_packet_options_ != nullptr) {
+    QuicTime next_release_time = sent_packet_manager_.GetNextReleaseTime();
+    uint64_t release_time_delay_ns = 0;
+    QuicTime now = packet_send_time;
+    if (next_release_time > now) {
+      release_time_delay_ns = (next_release_time - now).ToMicroseconds() * 1000;
+      // Set packet_send_time to the future to make the RTT estimation accurate.
+      packet_send_time = next_release_time;
+    }
+    per_packet_options_->SetReleaseTimeDelay(release_time_delay_ns);
+  }"->
+    " WriteResult result = writer_->WritePacket(
+      packet->encrypted_buffer, encrypted_length, self_address().host(),
+      peer_address(), per_packet_options_);";
+    " WriteResult result = writer_->WritePacket(
+      packet->encrypted_buffer, encrypted_length, self_address().host(),
+      peer_address(), per_packet_options_);"->
+    "  if (result.status == WRITE_STATUS_BLOCKED) {
+    // Ensure the writer is still write blocked, otherwise QUIC may continue
+    // trying to write when it will not be able to.
+    DCHECK(writer_->IsWriteBlocked());
+    visitor_->OnWriteBlocked();
+    // If the socket buffers the data, then the packet should not
+    // be queued and sent again, which would result in an unnecessary
+    // duplicate packet being sent.  The helper must call OnCanWrite
+    // when the write completes, and OnWriteError if an error occurs.
+    if (!writer_->IsWriteBlockedDataBuffered()) {
+      return false;
+    }
+  }";
+    "  if (result.status == WRITE_STATUS_BLOCKED) {
+    // Ensure the writer is still write blocked, otherwise QUIC may continue
+    // trying to write when it will not be able to.
+    DCHECK(writer_->IsWriteBlocked());
+    visitor_->OnWriteBlocked();
+    // If the socket buffers the data, then the packet should not
+    // be queued and sent again, which would result in an unnecessary
+    // duplicate packet being sent.  The helper must call OnCanWrite
+    // when the write completes, and OnWriteError if an error occurs.
+    if (!writer_->IsWriteBlockedDataBuffered()) {
+      return false;
+    }
+  }"->
+    "  bool reset_retransmission_alarm = sent_packet_manager_.OnPacketSent(
+      packet, packet->original_packet_number, packet_send_time,
+      packet->transmission_type, IsRetransmittable(*packet));";
+    "  bool reset_retransmission_alarm = sent_packet_manager_.OnPacketSent(
+      packet, packet->original_packet_number, packet_send_time,
+      packet->transmission_type, IsRetransmittable(*packet));"->
+    "  if (reset_retransmission_alarm || !retransmission_alarm_->IsSet()) {
+    SetRetransmissionAlarm();
+  }";
+    "  if (reset_retransmission_alarm || !retransmission_alarm_->IsSet()) {
+    SetRetransmissionAlarm();
+  }"->
+    "  packet_generator_.UpdatePacketNumberLength(
+      sent_packet_manager_.GetLeastUnacked(),
+      sent_packet_manager_.EstimateMaxPacketsInFlight(max_packet_length()));";
+    "  packet_generator_.UpdatePacketNumberLength(
+      sent_packet_manager_.GetLeastUnacked(),
+      sent_packet_manager_.EstimateMaxPacketsInFlight(max_packet_length()));"
+    ->
+    "  stats_.bytes_sent += result.bytes_written;
+  ++stats_.packets_sent;
+  if (packet->transmission_type != NOT_RETRANSMISSION) {
+    stats_.bytes_retransmitted += result.bytes_written;
+    ++stats_.packets_retransmitted;
+  }";
+    "  stats_.bytes_sent += result.bytes_written;
+  ++stats_.packets_sent;
+  if (packet->transmission_type != NOT_RETRANSMISSION) {
+    stats_.bytes_retransmitted += result.bytes_written;
+    ++stats_.packets_retransmitted;
+  }"->
+    "bool QuicConnection::WritePacket(SerializedPacket* packet)"[label="return true", style=dashed];
+}    
 
 }
 
