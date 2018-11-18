@@ -147,7 +147,7 @@ subgraph cluster_QuicStream_WriteBufferedData {
    "void QuicStream::WriteBufferedData"[style=dashed];
 }
 
-subgraph cluster_QuicStream_WritevDataInner {
+    subgraph cluster_QuicStream_WritevDataInner {
 
     "QuicConsumedData consumed_data = 
         WritevDataInner(write_length, stream_bytes_written(), fin)"->
@@ -155,7 +155,7 @@ subgraph cluster_QuicStream_WritevDataInner {
      QuicStreamOffset offset, bool fin)"[dir=both, style=dashed];
 
     "QuicConsumedData QuicStream::WritevDataInner(size_t write_length,
-     QuicStreamOffset offset, bool fin)"->
+     QuicStreamOffset offset, bool fin)"[dir=both, style=dashed]->
     "if (fin && add_random_padding_after_fin_) { 
         state = FIN_AND_PADDING;
     }"[style=dashed];
@@ -168,8 +168,8 @@ subgraph cluster_QuicStream_WritevDataInner {
     "return session()->WritevData(this, id(), write_length, offset, state);"->
     "QuicConsumedData consumed_data = 
         WritevDataInner(write_length, stream_bytes_written(), fin)"[style=dashed];
-    
-}
+        
+    }
 
 
     subgraph cluster_QuicSession_WritevData {
