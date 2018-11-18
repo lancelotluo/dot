@@ -1,0 +1,51 @@
+digraph {
+    "if ((buf_len == 0 || in->buf->in_file || in->buf->last_in_chain) && in->buf->last_buf)"[shape=diamond];
+    "if (in->buf->in_file)"[shape=diamond];
+
+    "ngx_http_quic_send_chain"->"while (in)"[style=dashed];
+    "while (in)" -> "buf_len = ngx_buf_size(in->buf)"[style=dashed];
+    "buf_len = ngx_buf_size(in->buf)"->"if ((buf_len == 0 || in->buf->in_file || in->buf->last_in_chain) && in->buf->last_buf)";
+    "if ((buf_len == 0 || in->buf->in_file || in->buf->last_in_chain) && in->buf->last_buf)"->"last=1"[label=Y];
+    "if ((buf_len == 0 || in->buf->in_file || in->buf->last_in_chain) && in->buf->last_buf)"->"if (in->buf->in_file)"[label=N];
+    "last=1"->"if (in->buf->in_file)"[label=N];
+    "if (in->buf->in_file)"->"file_buf = ngx_alloc(buf_len, r->connection->log)"[label=Y];
+    "file_buf = ngx_alloc(buf_len, r->connection->log)"->"n = read(in->buf->file->fd, file_buf, buf_len)";
+    "n = read(in->buf->file->fd, file_buf, buf_len)"->"int ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)";
+    "int ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)"->"free(file_buf)";
+    "free(file_buf)"->"if (in->buf->in_file)";
+    "if (in->buf->in_file)"->"in>t ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)"[label=N];
+    "int ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)"->"in = in->next";
+    "in = in->next"->"while (in)"[style=dashed];
+subgraph cluster_ngx_http_quic_response_body_available {
+    "int ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)"->"string ngx_body = string(reinterpret_cast<char*>(buf), buf_len)"[style=dashed];
+    "string ngx_body = string(reinterpret_cast<char*>(buf), buf_len)"->"quic_stream->OnNginxBodyAvailable(ngx_body, fin)";
+    "quic_stream->OnNginxBodyAvailable(ngx_body, fin)"->"return 0";
+    "return 0"->"int ngx_http_quic_response_body_available(void *stream, unsigned char *buf, const int buf_len, int last_buf, int stream_id)"[style=dashed];
+}
+
+subgraph cluster_stream_OnNginxBodyAvailable {
+    "quic_stream->OnNginxBodyAvailable(ngx_body, fin)"->"void QuicSimpleServerStream::OnNginxBodyAvailable(const std::string &body, bool fin)"[dir=both, style=dashed];
+    "void QuicSimpleServerStream::OnNginxBodyAvailable(const std::string &body, bool fin)"->"if (write_side_closed() || fin_buffered()"[style=dashed];
+    "if (write_side_closed() || fin_buffered()"->"return;"[label=Y];
+    "if (write_side_closed() || fin_buffered()"->"WriteOrBufferData(body, fin, nullptr)"[label=N];
+    "return;"->"WriteOrBufferData(body, fin, nullptr)";
+    "WriteOrBufferData(body, fin, nullptr)"->"void QuicSimpleServerStream::OnNginxBodyAvailable(const std::string &body, bool fin)"[style=dashed];
+}
+
+subgraph cluster_QuicStream_WriteOrBufferData {
+    "if (data.length() > 0)"[shape=diamond];
+    "if (!had_buffered_data && (HasBufferedData() || fin_buffered_))"[shape=diamond];
+
+    "WriteOrBufferData(body, fin, nullptr)"->"void QuicStream::WriteOrBufferData"[dir=both, style=dashed];
+    "void QuicStream::WriteOrBufferData"->"if (data.length() > 0)"[style=dashed];
+    "if (data.length() > 0)"->"struct iovec iov(MakeIovec(data))"[label=Y];
+    "struct iovec iov(MakeIovec(data))"->"send_buffer_.SaveStreamData(&iov, 1, 0, data.length())";
+    "send_buffer_.SaveStreamData(&iov, 1, 0, data.length())"->"OnDataBuffered(offset, data.length(), ack_listener)";
+
+    "if (!had_buffered_data && (HasBufferedData() || fin_buffered_))"->"WriteBufferedData()"[label=Y];
+    "WriteBufferedData()"->"void QuicStream::WriteOrBufferData"[style=dashed];
+    "if (!had_buffered_data && (HasBufferedData() || fin_buffered_))"->"void QuicStream::WriteOrBufferData"[label=N, style=dashed];
+
+}
+}
+
