@@ -1,0 +1,104 @@
+#0  0x00000000004ded78 in ngx_http_quic_send_chain (fc=0x3f7c2d07dac8, in=0x3f7c2cfebe68, limit=0)
+    at src/http/quic/ngx_http_quic_filter_module.c:128
+#1  0x00000000004d34bd in ngx_http_write_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940) at src/http/ngx_http_write_filter_module.c:254
+#2  0x00000000004d5392 in ngx_http_chunked_body_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940)
+    at src/http/modules/ngx_http_chunked_filter_module.c:115
+#3  0x00000000004e1fba in ngx_http_gzip_body_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940) at src/http/modules/ngx_http_gzip_filter_module.c:329
+#4  0x00000000004e3e89 in ngx_http_postpone_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940) at src/http/ngx_http_postpone_filter_module.c:91
+#5  0x00000000004e83e5 in ngx_http_ssi_body_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940) at src/http/modules/ngx_http_ssi_filter_module.c:413
+#6  0x00000000004ec183 in ngx_http_charset_body_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940)
+    at src/http/modules/ngx_http_charset_filter_module.c:557
+#7  0x00000000004ef4b4 in ngx_http_addition_body_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940)
+    at src/http/modules/ngx_http_addition_filter_module.c:149
+#8  0x00000000004f15f9 in ngx_http_trailers_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940)
+    at src/http/modules/ngx_http_headers_filter_module.c:264
+#9  0x0000000000672fa8 in ngx_http_dump_body_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940)
+    at /data/lancelotluo/stgw_nginx/debug_l7_nginx_1.4.5_1.13.11/nginx-1.13.11/../third-modules/ngx_http_dump_filter_module/ngx_http_dump_filter_module.c:245
+#10 0x0000000000435693 in ngx_output_chain (ctx=0x3f7c2cfebe00, in=0x7fffffff3940) at src/core/ngx_output_chain.c:74
+#11 0x00000000004f2de7 in ngx_http_copy_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940) at src/http/ngx_http_copy_filter_module.c:152
+#12 0x00000000004e069b in ngx_http_range_body_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940)
+    at src/http/modules/ngx_http_range_filter_module.c:635
+#13 0x000000000048dfd8 in ngx_http_output_filter (r=0x3f7c2cfcc090, in=0x7fffffff3940) at src/http/ngx_http_core_module.c:1794
+#14 0x000000000056e614 in ngx_http_static_handler (r=0x3f7c2cfcc090) at src/http/modules/ngx_http_static_module.c:268
+#15 0x000000000048cec7 in ngx_http_core_content_phase (r=0x3f7c2cfcc090, ph=0x3f7c2d0c19a0) at src/http/ngx_http_core_module.c:1200
+#16 0x000000000048b9ff in ngx_http_core_run_phases (r=0x3f7c2cfcc090) at src/http/ngx_http_core_module.c:882
+#17 0x000000000048b970 in ngx_http_handler (r=0x3f7c2cfcc090) at src/http/ngx_http_core_module.c:865
+#18 0x000000000048f8b4 in ngx_http_internal_redirect (r=0x3f7c2cfcc090, uri=0x7fffffff3bd8, args=0x3f7c2cfcc470)
+    at src/http/ngx_http_core_module.c:2472
+#19 0x00000000005727cb in ngx_http_index_handler (r=0x3f7c2cfcc090) at src/http/modules/ngx_http_index_module.c:277
+#20 0x000000000048cec7 in ngx_http_core_content_phase (r=0x3f7c2cfcc090, ph=0x3f7c2d0c1958) at src/http/ngx_http_core_module.c:1200
+#21 0x000000000048b9ff in ngx_http_core_run_phases (r=0x3f7c2cfcc090) at src/http/ngx_http_core_module.c:882
+#22 0x000000000048b970 in ngx_http_handler (r=0x3f7c2cfcc090) at src/http/ngx_http_core_module.c:865
+#23 0x000000000049d48a in ngx_http_process_request (r=0x3f7c2cfcc090) at src/http/ngx_http_request.c:2030
+#24 0x00000000004fe83b in ngx_http_quic_process_request_headers (r=0x3f7c2cfcc090) at src/http/quic/ngx_http_quic.c:751
+#25 0x00000000004fd98f in ngx_http_quic_process_request_line (r=0x3f7c2cfcc090) at src/http/quic/ngx_http_quic.c:592
+#26 0x00000000004fd0be in ngx_http_quic_init_http_request (quic_stream=0x3f7c2d0bcc20, connection=0x3f7c2d0c97c8, request=0x3f7c2d086250 "GET / HTTP/1.1\r\nhost: browser.qq.com\r\n\r\n", request_len=40, body=0x3f7c2d0bcf31 "", body_len=0, nq_info=0x7fffffff3f18)
+    at src/http/quic/ngx_http_quic.c:238
+#27 0x00000000005026f1 in ngx_http_quic_send_to_nginx(void*, char const*, int, char const*, int) (stream=0x3f7c2d0bcc20, request=0x3f7c2d086250 "GET / HTTP/1.1\r\nhost: browser.qq.com\r\n\r\n", request_len=40, body=0x3f7c2d0bcf31 "", body_len=0)
+---Type <return> to continue, or q <return> to quit---
+    at src/http/quic/adaptor/ngx_http_quic_adaptor.cc:349
+#28 0x000000000050dacf in quic::QuicSimpleServerStream::SendToNginx() (this=0x3f7c2d0bcc20)
+    at src/http/quic/adaptor/ngx_quic_simple_server_stream.cc:410
+#29 0x000000000050c7b9 in quic::QuicSimpleServerStream::OnDataAvailable() (this=0x3f7c2d0bcc20)
+    at src/http/quic/adaptor/ngx_quic_simple_server_stream.cc:130
+#30 0x00007ffff706f88c in quic::QuicStreamSequencer::SetUnblocked() (this=0x3f7c2d0bcc30)
+    at ../../net/third_party/quic/core/quic_stream_sequencer.cc:194
+#31 0x00007ffff7062b3f in quic::QuicSpdyStream::ConsumeHeaderList() (this=0x3f7c2d0bcc20)
+    at ../../net/third_party/quic/core/quic_spdy_stream.cc:132
+#32 0x000000000050c117 in quic::QuicSimpleServerStream::OnInitialHeadersComplete(bool, unsigned long, quic::QuicHeaderList const&) (this=0x3f7c2d0bcc20, fin=true, frame_len=30, header_list=...) at src/http/quic/adaptor/ngx_quic_simple_server_stream.cc:86
+#33 0x00007ffff7062d24 in quic::QuicSpdyStream::OnStreamHeaderList(bool, unsigned long, quic::QuicHeaderList const&) (this=0x3f7c2d0bcc20, fin=true, frame_len=30, header_list=...) at ../../net/third_party/quic/core/quic_spdy_stream.cc:157
+#34 0x00007ffff705d425 in quic::QuicSpdySession::OnStreamHeaderList(unsigned int, bool, unsigned long, quic::QuicHeaderList const&) (this=0x3f7c3a68b020, stream_id=5, fin=true, frame_len=30, header_list=...) at ../../net/third_party/quic/core/quic_spdy_session.cc:392
+#35 0x00007ffff705ea13 in quic::QuicSpdySession::OnHeaderList(quic::QuicHeaderList const&) (this=0x3f7c3a68b020, header_list=...)
+    at ../../net/third_party/quic/core/quic_spdy_session.cc:565
+#36 0x00007ffff70606b4 in quic::QuicSpdySession::SpdyFramerVisitor::OnHeaderFrameEnd(unsigned int) (this=0x3f7c3a6bbd40)
+    at ../../net/third_party/quic/core/quic_spdy_session.cc:98
+#37 0x00007ffff70d835c in http2::Http2DecoderAdapter::CommonHpackFragmentEnd() (this=0x3f7c3a68b910)
+    at ../../net/third_party/spdy/core/http2_frame_decoder_adapter.cc:998
+#38 0x00007ffff70d7f83 in http2::Http2DecoderAdapter::OnHeadersEnd() (this=0x3f7c3a68b910)
+    at ../../net/third_party/spdy/core/http2_frame_decoder_adapter.cc:420
+#39 0x00007ffff6edc754 in http2::HeadersPayloadDecoder::ResumeDecodingPayload(http2::FrameDecoderState*, http2::DecodeBuffer*) (this=0x3f7c2d062f80, state=0x3f7c2d062f50, db=0x7fffffff72a8) at ../../net/third_party/http2/decoder/payload_decoders/headers_payload_decoder.cc:155
+#40 0x00007ffff6edc0d5 in http2::HeadersPayloadDecoder::StartDecodingPayload(http2::FrameDecoderState*, http2::DecodeBuffer*) (this=0x3f7c2d062f80, state=0x3f7c2d062f50, db=0x7fffffff72a8) at ../../net/third_party/http2/decoder/payload_decoders/headers_payload_decoder.cc:93
+#41 0x00007ffff6ed292c in http2::Http2FrameDecoder::StartDecodingHeadersPayload(http2::DecodeBuffer*) (this=0x3f7c2d062f50, db=0x7fffffff72a8)
+    at ../../net/third_party/http2/decoder/http2_frame_decoder.cc:304
+#42 0x00007ffff6ed2000 in http2::Http2FrameDecoder::StartDecodingPayload(http2::DecodeBuffer*) (this=0x3f7c2d062f50, db=0x7fffffff7898)
+    at ../../net/third_party/http2/decoder/http2_frame_decoder.cc:116
+#43 0x00007ffff6ed1b61 in http2::Http2FrameDecoder::DecodeFrame(http2::DecodeBuffer*) (this=0x3f7c2d062f50, db=0x7fffffff7898)
+    at ../../net/third_party/http2/decoder/http2_frame_decoder.cc:52
+#44 0x00007ffff70d569e in http2::Http2DecoderAdapter::ProcessInputFrame(char const*, unsigned long) (this=0x3f7c3a68b910, data=0x3f7c43a77020 "", len=30) at ../../net/third_party/spdy/core/http2_frame_decoder_adapter.cc:702
+#45 0x00007ffff70d53c3 in http2::Http2DecoderAdapter::ProcessInput(char const*, unsigned long) (this=0x3f7c3a68b910, data=0x3f7c43a77020 "", len=30) at ../../net/third_party/spdy/core/http2_frame_decoder_adapter.cc:219
+#46 0x00007ffff705d4da in quic::QuicSpdySession::ProcessHeaderData(iovec const&) (this=0x3f7c3a68b020, iov=...)
+    at ../../net/third_party/quic/core/quic_spdy_session.cc:407
+#47 0x00007ffff701d40d in quic::QuicHeadersStream::OnDataAvailable() (this=0x3f7c2d07d020)
+---Type <return> to continue, or q <return> to quit---
+    at ../../net/third_party/quic/core/quic_headers_stream.cc:40
+#48 0x00007ffff706e8ee in quic::QuicStreamSequencer::OnStreamFrame(quic::QuicStreamFrame const&) (this=0x3f7c2d07d030, frame=...)
+    at ../../net/third_party/quic/core/quic_stream_sequencer.cc:88
+#49 0x00007ffff7064b4d in quic::QuicStream::OnStreamFrame(quic::QuicStreamFrame const&) (this=0x3f7c2d07d020, frame=...)
+    at ../../net/third_party/quic/core/quic_stream.cc:156
+#50 0x00007ffff703ad59 in quic::QuicSession::OnStreamFrame(quic::QuicStreamFrame const&) (this=0x3f7c3a68b020, frame=...)
+    at ../../net/third_party/quic/core/quic_session.cc:108
+#51 0x0000000000506209 in quic::QuicSimpleServerSession::OnStreamFrame(quic::QuicStreamFrame const&) (this=0x3f7c3a68b020, frame=...)
+    at src/http/quic/adaptor/ngx_quic_simple_server_session.cc:88
+#52 0x00007ffff6fc356b in quic::QuicConnection::OnStreamFrame(quic::QuicStreamFrame const&) (this=0x3f7c3a6ce020, frame=...)
+    at ../../net/third_party/quic/core/quic_connection.cc:863
+#53 0x00007ffff700daa5 in quic::QuicFramer::ProcessFrameData(quic::QuicDataReader*, quic::QuicPacketHeader const&) (this=0x3f7c3a6ce048, reader=0x7fffffffa2d8, header=...) at ../../net/third_party/quic/core/quic_framer.cc:1851
+#54 0x00007ffff700a783 in quic::QuicFramer::ProcessIetfDataPacket(quic::QuicDataReader*, quic::QuicPacketHeader*, quic::QuicEncryptedPacket const&, char*, unsigned long) (this=0x3f7c3a6ce048, encrypted_reader=0x7fffffffbbc8, header=0x7fffffffadd0, packet=
+    ..., decrypted_buffer=0x7fffffffb040 "\200\003", buffer_length=1452) at ../../net/third_party/quic/core/quic_framer.cc:1246
+#55 0x00007ffff7008d1c in quic::QuicFramer::ProcessPacket(quic::QuicEncryptedPacket const&) (this=0x3f7c3a6ce048, packet=...)
+    at ../../net/third_party/quic/core/quic_framer.cc:1097
+#56 0x00007ffff6fca32d in quic::QuicConnection::ProcessUdpPacket(quic::QuicSocketAddress const&, quic::QuicSocketAddress const&, quic::QuicReceivedPacket const&) (this=0x3f7c3a6ce020, self_address=..., peer_address=..., packet=...)
+    at ../../net/third_party/quic/core/quic_connection.cc:1655
+#57 0x00007ffff703d79d in quic::QuicSession::ProcessUdpPacket(quic::QuicSocketAddress const&, quic::QuicSocketAddress const&, quic::QuicReceivedPacket const&) (this=0x3f7c3a68b020, self_address=..., peer_address=..., packet=...) at ../../net/third_party/quic/core/quic_session.cc:367
+#58 0x000000000051b435 in quic::QuicDispatcher::OnUnauthenticatedPublicHeader(quic::QuicPacketHeader const&) (this=0x3f7c2d05b820, header=...)
+    at src/quic/ngx_quic_dispatcher.cc:345
+#59 0x00007ffff7008a3d in quic::QuicFramer::ProcessPacket(quic::QuicEncryptedPacket const&) (this=0x3f7c2d05ba88, packet=...)
+    at ../../net/third_party/quic/core/quic_framer.cc:1071
+#60 0x000000000051ae44 in quic::QuicDispatcher::ProcessPacket(quic::QuicSocketAddress const&, quic::QuicSocketAddress const&, quic::QuicReceivedPacket const&) (this=0x3f7c2d05b820, self_address=..., peer_address=..., packet=...) at src/quic/ngx_quic_dispatcher.cc:311
+#61 0x0000000000502468 in ngx_http_quic_dispatcher_process_packet(void*, quic::QuicSimpleDispatcher*, char const*, size_t, sockaddr*, sockaddr*, int) (ngx_connection=0x3f7c2d0c97c8, dispatcher=0x3f7c2d05b820, buffer=0x3f7c2d07e2c0 "\374Q044P\217\270_=o<\307\234", length=62, peer_sockaddr=0x3f7c2d07e210, local_sockaddr=0x3f7c2d0c1a70, fd=12) at src/http/quic/adaptor/ngx_http_quic_adaptor.cc:319
+#62 0x00000000004fc9d2 in ngx_http_quic_init (rev=0x3f7c3a7852c0) at src/http/quic/ngx_http_quic.c:90
+#63 0x000000000049926b in ngx_http_init_connection (c=0x3f7c2d0c97c8) at src/http/ngx_http_request.c:352
+#64 0x000000000046c3ab in ngx_event_recvmsg (ev=0x3f7c3a7850e0) at src/event/ngx_event_accept.c:634
+#65 0x000000000047b515 in ngx_epoll_process_events (cycle=0x3f7c2cfd6090, timer=24, flags=1) at src/event/modules/ngx_epoll_module.c:903
+#66 0x0000000000468c2a in ngx_process_events_and_timers (cycle=0x3f7c2cfd6090) at src/event/ngx_event.c:242
+#67 0x00000000004789a4 in ngx_single_process_cycle (cycle=0x3f7c2cfd6090) at src/os/unix/ngx_process_cycle.c:420
+#68 0x000000000042c7bd in main (argc=1, argv=0x7fffffffe518) at src/core/nginx.c:409

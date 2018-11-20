@@ -57,6 +57,40 @@ subgraph cluster_QuicStream_WriteOrBufferData {
     "WriteBufferedData()"->"void QuicStream::WriteBufferedData"[style=dashed, dir=both];
 }
 
+subgraph cluster_QuicStreamSendBuffer_SaveStreamData {
+    label="void QuicStreamSendBuffer::SaveStreamData
+    用于将nginx body数据切分成iovec，用于stream发送"
+
+
+    "send_buffer_.SaveStreamData(&iov, 1, 0, data.length())"->
+    "void QuicStreamSendBuffer::SaveStreamData"[dir=both, style=dashed];
+    "void QuicStreamSendBuffer::SaveStreamData"->
+    " const QuicByteCount max_data_slice_size =
+    GetQuicFlag(FLAGS_quic_send_buffer_max_data_slice_size)
+    max_data_slice_size这个值等于4096";
+    " const QuicByteCount max_data_slice_size =
+    GetQuicFlag(FLAGS_quic_send_buffer_max_data_slice_size)
+    max_data_slice_size这个值等于4096"->
+    "while (data_length > 0) {
+        size_t slice_len = std::min(data_length, max_data_slice_size);
+    QuicMemSlice slice(allocator_, slice_len);
+    QuicUtils::CopyToBuffer(iov, iov_count, iov_offset, slice_len,
+                            const_cast<char*>(slice.data()));
+    SaveMemSlice(std::move(slice));
+    data_length -= slice_len;
+    iov_offset += slice_len;
+  }"
+    "while (data_length > 0) {
+        size_t slice_len = std::min(data_length, max_data_slice_size);
+    QuicMemSlice slice(allocator_, slice_len);
+    QuicUtils::CopyToBuffer(iov, iov_count, iov_offset, slice_len,
+                            const_cast<char*>(slice.data()));
+    SaveMemSlice(std::move(slice));
+    data_length -= slice_len;
+    iov_offset += slice_len;
+  }"->"void QuicStreamSendBuffer::SaveStreamData"[style=dashed];
+}
+
 subgraph cluster_QuicStream_WriteBufferedData {
 
     "if (session_->ShouldYield(id()))"[shape=diamond];
@@ -74,8 +108,10 @@ subgraph cluster_QuicStream_WriteBufferedData {
     "size_t write_length = BufferedDataBytes();
     bool fin_with_zero_data = (fin_buffered_ && write_length == 0);
     bool fin = fin_buffered_;"->
-    "send_window = flow_controller_.SendWindowSize();";
-    "send_window = flow_controller_.SendWindowSize();" ->
+    "send_window = flow_controller_.SendWindowSize();
+    初始值是kMinimumFlowControlSendWindow=16K，发送数据时为6*1024*1024";
+    "send_window = flow_controller_.SendWindowSize();
+    初始值是kMinimumFlowControlSendWindow=16K，发送数据时为6*1024*1024"->
     "if (stream_contributes_to_connection_flow_control_) { 
     send_window =
         std::min(send_window, connection_flow_controller_->SendWindowSize());
@@ -175,7 +211,8 @@ subgraph cluster_QuicStream_WritevDataInner {
     subgraph cluster_QuicSession_WritevData {
     label = "QuicSession::WritevData";
     "QuicConsumedData QuicSession::WritevData"[style=filled, fillcolor=gold];
-
+    
+    "if (!IsEncryptionEstablished() && id != kCryptoStreamId)"[shape=diamond];
     "if (id == kCryptoStreamId && stream != GetMutableCryptoStream())"[shape=diamond];
 
     "return session()->WritevData(this, id(), write_length, offset, state);"->
@@ -285,7 +322,51 @@ subgraph cluster_QuicStream_WritevDataInner {
     "  if (has_handshake) {
     SendQueuedFrames(/*flush=*/true);}"->"QuicPacketGenerator::ConsumeData"[style=dashed, label="return QuicConsumedData(total_bytes_consumed, fin_consumed);"];
 
-  }
+}
+subgraph cluster_{
+    label="QuicPacketGenerator::ConsumeDataFastPath(
+        QuicStreamId id, 
+    size_t write_length,
+    QuicStreamOffset offset,
+    bool fin,
+    size_t total_bytes_consumed)
+    其中write_length表示可以送的最大数据，受限于发送窗口. 
+    offset表示stream中的偏移
+    ";
+
+    "QuicConsumedData QuicPacketGenerator::ConsumeDataFastPath"[style=filled, fillcolor=gold];
+
+    "  if (run_fast_path) {
+    return ConsumeDataFastPath(id, write_length, offset, state != NO_FIN,
+                               total_bytes_consumed);"->
+    "QuicConsumedData QuicPacketGenerator::ConsumeDataFastPath"[dir=both, style=dashed];
+    "QuicConsumedData QuicPacketGenerator::ConsumeDataFastPath"->
+    "  while (total_bytes_consumed < write_length &&
+         delegate_->ShouldGeneratePacket(HAS_RETRANSMITTABLE_DATA,
+                                         NOT_HANDSHAKE)) {
+    // Serialize and encrypt the packet.
+    size_t bytes_consumed = 0;
+    packet_creator_.CreateAndSerializeStreamFrame(
+        id, write_length, total_bytes_consumed, offset + total_bytes_consumed,
+        fin, &bytes_consumed);
+    total_bytes_consumed += bytes_consumed;
+  }"[style=dashed];
+    "  while (total_bytes_consumed < write_length &&
+         delegate_->ShouldGeneratePacket(HAS_RETRANSMITTABLE_DATA,
+                                         NOT_HANDSHAKE)) {
+    // Serialize and encrypt the packet.
+    size_t bytes_consumed = 0;
+    packet_creator_.CreateAndSerializeStreamFrame(
+        id, write_length, total_bytes_consumed, offset + total_bytes_consumed,
+        fin, &bytes_consumed);
+    total_bytes_consumed += bytes_consumed;
+  }"->
+    "  return QuicConsumedData(total_bytes_consumed,
+                          fin && (total_bytes_consumed == write_length));"[style=dashed];
+    "  return QuicConsumedData(total_bytes_consumed,
+                          fin && (total_bytes_consumed == write_length));"->
+    "QuicConsumedData QuicPacketGenerator::ConsumeDataFastPath"[style=dashed];
+}
 
 subgraph cluster_QuicConnection_ShouldGeneratePacket{
     label="bool QuicConnection::ShouldGeneratePacket";
@@ -409,7 +490,7 @@ subgraph cluster_QuicConnection_CanWrite{
     "  if (using_pacing_) {
     return pacing_sender_.TimeUntilSend(now,
                                         unacked_packets_.bytes_in_flight());
-  }";
+    }";
     "  if (using_pacing_) {
     return pacing_sender_.TimeUntilSend(now,
                                         unacked_packets_.bytes_in_flight());
@@ -428,7 +509,8 @@ subgraph cluster_QuicSentPacketManager_TimeUntilSend{
     
     "  if (using_pacing_) {
     return pacing_sender_.TimeUntilSend(now,
-                                        unacked_packets_.bytes_in_flight())"->
+                                        unacked_packets_.bytes_in_flight());
+    }"->
     "QuicTime::Delta PacingSender::TimeUntilSend"[style=dashed, dir=both];
     "QuicTime::Delta PacingSender::TimeUntilSend"->
     "!sender_->CanSend(bytes_in_flight)"[style=dashed];
@@ -691,6 +773,121 @@ subgraph cluster_QuicConnection_WritePacket{
   }"->
     "bool QuicConnection::WritePacket(SerializedPacket* packet)"[label="return true", style=dashed];
 }    
+subgraph cluster_QuicPerConnectionPacketWriter_WritePacket{
+    " WriteResult result = writer_->WritePacket(
+      packet->encrypted_buffer, encrypted_length, self_address().host(),
+      peer_address(), per_packet_options_);"->
+    "WriteResult QuicPerConnectionPacketWriter::WritePacket"[dir=both, style=dashed];
+
+    "WriteResult QuicPerConnectionPacketWriter::WritePacket"->
+    "return shared_writer_->WritePacket(buffer, buf_len, self_address,
+        peer_address, options)"[style=dashed];
+    "return shared_writer_->WritePacket(buffer, buf_len, self_address,
+        peer_address, options)"->
+    "WriteResult QuicPerConnectionPacketWriter::WritePacket"[style=dashed];
+}
+subgraph cluster_QuicDefaultPacketWriter_WritePacket {
+    "return shared_writer_->WritePacket(buffer, buf_len, self_address,
+        peer_address, options)"->
+    "WriteResult QuicDefaultPacketWriter::WritePacket"[dir=both, style=dashed];
+    "WriteResult QuicDefaultPacketWriter::WritePacket"->
+    "WriteResult result = QuicSocketUtils::WritePacket"[style=dashed];
+    "WriteResult result = QuicSocketUtils::WritePacket"->
+    "  if (result.status == WRITE_STATUS_BLOCKED) {
+    write_blocked_ = true;
+    }";
+    "  if (result.status == WRITE_STATUS_BLOCKED) {
+    write_blocked_ = true;
+    }"->
+    "WriteResult QuicDefaultPacketWriter::WritePacket"[label="return result", style=dashed];
+
+}
+subgraph cluster_QuicSocketUtils_WritePacket{
+    label="WriteResult QuicSocketUtils::WritePacket
+    最底层的发送函数"
+    style=filled;
+    color=lightgrey;
+
+    "WriteResult result = QuicSocketUtils::WritePacket"->
+    "WriteResult QuicSocketUtils::WritePacket"[dir=both, style=dashed];
+    "WriteResult QuicSocketUtils::WritePacket"->
+    "  sockaddr_storage raw_address = peer_address.generic_address();
+  iovec iov = {const_cast<char*>(buffer), buf_len};
+
+  msghdr hdr;
+  hdr.msg_name = &raw_address;
+  hdr.msg_namelen = raw_address.ss_family == AF_INET ? sizeof(sockaddr_in)
+                                                     : sizeof(sockaddr_in6);
+  hdr.msg_iov = &iov;
+  hdr.msg_iovlen = 1;
+  hdr.msg_flags = 0;"[style=dashed];
+    "  sockaddr_storage raw_address = peer_address.generic_address();
+  iovec iov = {const_cast<char*>(buffer), buf_len};
+
+  msghdr hdr;
+  hdr.msg_name = &raw_address;
+  hdr.msg_namelen = raw_address.ss_family == AF_INET ? sizeof(sockaddr_in)
+                                                     : sizeof(sockaddr_in6);
+  hdr.msg_iov = &iov;
+  hdr.msg_iovlen = 1;
+  hdr.msg_flags = 0;"->
+    "  const int kSpaceForIpv4 = CMSG_SPACE(sizeof(in_pktinfo));
+  const int kSpaceForIpv6 = CMSG_SPACE(sizeof(in6_pktinfo));
+  // kSpaceForIp should be big enough to hold both IPv4 and IPv6 packet info.
+  const int kSpaceForIp =
+      (kSpaceForIpv4 < kSpaceForIpv6) ? kSpaceForIpv6 : kSpaceForIpv4;
+  char cbuf[kSpaceForIp];";
+    "  const int kSpaceForIpv4 = CMSG_SPACE(sizeof(in_pktinfo));
+  const int kSpaceForIpv6 = CMSG_SPACE(sizeof(in6_pktinfo));
+  // kSpaceForIp should be big enough to hold both IPv4 and IPv6 packet info.
+  const int kSpaceForIp =
+      (kSpaceForIpv4 < kSpaceForIpv6) ? kSpaceForIpv6 : kSpaceForIpv4;
+  char cbuf[kSpaceForIp];"->
+    "  if (!self_address.IsInitialized()) {
+    hdr.msg_control = nullptr;
+    hdr.msg_controllen = 0;
+  } else {
+    hdr.msg_control = cbuf;
+    hdr.msg_controllen = kSpaceForIp;
+    cmsghdr* cmsg = CMSG_FIRSTHDR(&hdr);
+    SetIpInfoInCmsg(self_address, cmsg);
+    hdr.msg_controllen = cmsg->cmsg_len;
+  }";
+    "  if (!self_address.IsInitialized()) {
+    hdr.msg_control = nullptr;
+    hdr.msg_controllen = 0;
+  } else {
+    hdr.msg_control = cbuf;
+    hdr.msg_controllen = kSpaceForIp;
+    cmsghdr* cmsg = CMSG_FIRSTHDR(&hdr);
+    SetIpInfoInCmsg(self_address, cmsg);
+    hdr.msg_controllen = cmsg->cmsg_len;
+  }"->
+    "  int rc; 
+  do {
+    rc = sendmsg(fd, &hdr, 0); 
+  } while (rc < 0 && errno == EINTR);
+  if (rc >= 0) {
+    return WriteResult(WRITE_STATUS_OK, rc);
+  }";
+    "  int rc; 
+  do {
+    rc = sendmsg(fd, &hdr, 0); 
+  } while (rc < 0 && errno == EINTR);
+  if (rc >= 0) {
+    return WriteResult(WRITE_STATUS_OK, rc);
+  }"->
+    "  return WriteResult((errno == EAGAIN || errno == EWOULDBLOCK)
+                         ? WRITE_STATUS_BLOCKED
+                         : WRITE_STATUS_ERROR,
+                     errno);";
+    "  return WriteResult((errno == EAGAIN || errno == EWOULDBLOCK)
+                         ? WRITE_STATUS_BLOCKED
+                         : WRITE_STATUS_ERROR,
+                     errno);"->
+    "WriteResult QuicSocketUtils::WritePacket"[style=dashed];
+
+}
 
 }
 
